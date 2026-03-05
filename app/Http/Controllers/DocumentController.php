@@ -95,7 +95,7 @@ class DocumentController extends Controller
                         'title' => $doc->content['title'] ?? 'Custom Form',
                         'description' => $doc->content['description'] ?? 'Custom uploaded document',
                         'type' => 'custom_template',
-                        'icon_name' => 'FileSignature',
+                        'icon_name' => $doc->content['icon_name'] ?? 'FileSignature',
                     ];
                 });
 
@@ -781,6 +781,7 @@ class DocumentController extends Controller
             'description' => 'nullable|string|max:1000',
             'pdf' => 'nullable|file|mimes:pdf|max:20480',
             'fields' => 'nullable|string',
+            'icon_name' => 'nullable|string',
         ]);
 
         $filePath = null;
@@ -816,6 +817,7 @@ class DocumentController extends Controller
                 'title' => $request->input('title'),
                 'description' => $request->input('description'),
                 'fields' => $fields,
+                'icon_name' => $request->input('icon_name', 'FileSignature'),
             ],
         ]);
 
@@ -862,6 +864,7 @@ class DocumentController extends Controller
                 'description' => "Customized version of {$title}",
                 'fields' => $fields,
                 'file_path' => null,
+                'icon_name' => 'FileSignature',
             ],
         ]);
     }
@@ -881,6 +884,7 @@ class DocumentController extends Controller
                 'description' => $document->content['description'] ?? '',
                 'fields' => $document->content['fields'] ?? [],
                 'file_path' => $document->file_path,
+                'icon_name' => $document->content['icon_name'] ?? 'FileSignature',
             ],
         ]);
     }
@@ -898,6 +902,7 @@ class DocumentController extends Controller
             'description' => 'nullable|string|max:1000',
             'pdf' => 'nullable|file|mimes:pdf|max:20480',
             'fields' => 'nullable|string',
+            'icon_name' => 'nullable|string',
         ]);
 
         $fields = json_decode($request->input('fields', '[]'), true) ?? [];
@@ -906,6 +911,7 @@ class DocumentController extends Controller
         $data['title'] = $request->input('title');
         $data['description'] = $request->input('description');
         $data['fields'] = $fields;
+        $data['icon_name'] = $request->input('icon_name', 'FileSignature');
 
         $updatePayload = [
             'content' => $data,

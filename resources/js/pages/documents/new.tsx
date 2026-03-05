@@ -2,7 +2,8 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import {
     Upload, FileText, Plus, Trash2, GripVertical,
     Type, AlignLeft, CheckSquare, FileCheck, AlertCircle, Sparkles, RotateCcw,
-    ChevronUp, ChevronDown, ArrowUpDown, CalendarDays
+    ChevronUp, ChevronDown, ArrowUpDown, CalendarDays,
+    FileSignature, ClipboardList, Briefcase, ShieldAlert, BadgeInfo, Scale
 } from 'lucide-react';
 import * as pdfjs from 'pdfjs-dist';
 import { useRef, useState } from 'react';
@@ -29,7 +30,18 @@ interface DocumentData {
     description: string;
     fields: FormField[];
     file_path: string | null;
+    icon_name?: string;
 }
+
+const AVAILABLE_ICONS = [
+    { name: 'FileSignature', icon: FileSignature, label: 'Signature' },
+    { name: 'FileText', icon: FileText, label: 'Text Doc' },
+    { name: 'ClipboardList', icon: ClipboardList, label: 'List' },
+    { name: 'Briefcase', icon: Briefcase, label: 'Briefcase' },
+    { name: 'ShieldAlert', icon: ShieldAlert, label: 'Urgent' },
+    { name: 'BadgeInfo', icon: BadgeInfo, label: 'Notice' },
+    { name: 'Scale', icon: Scale, label: 'Legal' },
+];
 
 export default function NewDocument({ existingTemplate }: { existingTemplate?: DocumentData }) {
     const isEdit = !!existingTemplate;
@@ -57,11 +69,13 @@ export default function NewDocument({ existingTemplate }: { existingTemplate?: D
         title: string;
         description: string;
         fields: string;
+        icon_name: string;
     }>({
         pdf: null,
         title: existingTemplate?.title || '',
         description: existingTemplate?.description || '',
         fields: JSON.stringify(existingTemplate?.fields || []),
+        icon_name: existingTemplate?.icon_name || 'FileSignature',
     });
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -297,6 +311,26 @@ export default function NewDocument({ existingTemplate }: { existingTemplate?: D
                                         rows={3}
                                         className="w-full text-sm rounded-lg border-slate-200 focus:ring-primary/20 focus:border-primary transition-all"
                                     />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Template Icon</label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {AVAILABLE_ICONS.map((iconOpt) => (
+                                            <button
+                                                key={iconOpt.name}
+                                                type="button"
+                                                onClick={() => setData('icon_name', iconOpt.name)}
+                                                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg border transition-all ${data.icon_name === iconOpt.name
+                                                        ? 'border-primary bg-primary/10 text-primary scale-[1.02] font-bold'
+                                                        : 'border-border bg-background hover:bg-muted/50 text-muted-foreground'
+                                                    }`}
+                                                title={iconOpt.label}
+                                            >
+                                                <iconOpt.icon className="h-4 w-4" />
+                                                <span className="text-xs">{iconOpt.label}</span>
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>

@@ -2,8 +2,29 @@ import { Head, Link, router } from '@inertiajs/react';
 import {
     FileText, Bell, FileCheck, FileMinus, Search, Download, Eye, Plus,
     Scale, AlertTriangle, Gavel, Handshake, Calendar, BadgeCheck, X,
-    FileSignature, ClipboardCheck, UserPlus, Send, History, Trash2
+    FileSignature, ClipboardCheck, UserPlus, Send, History, Trash2,
+    ClipboardList, Briefcase, ShieldAlert, BadgeInfo
 } from 'lucide-react';
+
+const ICON_MAP: Record<string, any> = {
+    FileSignature,
+    FileText,
+    ClipboardList,
+    Briefcase,
+    ShieldAlert,
+    BadgeInfo,
+    Scale,
+    Bell,
+    Handshake,
+    Gavel,
+    AlertTriangle,
+    FileMinus,
+    Calendar,
+    UserPlus,
+    ClipboardCheck,
+    Send,
+    FileCheck
+};
 import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -52,6 +73,7 @@ interface CustomTemplate {
     title: string;
     description: string;
     type: string;
+    icon_name?: string;
 }
 
 interface DocumentsProps {
@@ -77,7 +99,7 @@ export default function Documents({ documents, stats, customTemplates, hiddenTem
     const allAvailableTemplates = useMemo(() => {
         const custom = (customTemplates ?? []).map(t => ({
             ...t,
-            icon: FileSignature,
+            icon: ICON_MAP[t.icon_name || 'FileSignature'] || FileSignature,
             isCustom: true
         }));
 
