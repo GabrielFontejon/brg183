@@ -11,8 +11,8 @@ class CaseController extends Controller
 {
     public function index(Request $request)
     {
-        // Auto-archive cases older than 31 days
-        LuponCase::where('date_filed', '<=', now()->subDays(31))->delete();
+        // Auto-archive cases older than 31 days (soft-delete so they remain restorable)
+        LuponCase::where('date_filed', '<=', now()->subDays(31))->whereNull('deleted_at')->delete();
 
         $query = LuponCase::query();
 
@@ -170,9 +170,16 @@ class CaseController extends Controller
             if ($request->has('date_filed')) {
                 $case->date_filed = $request->date_filed;
             }
+            if ($request->has('status')) {
+                $case->status = $request->status;
+            }
 
             // Update document data (layout overrides, new values)
-            $case->document_data = $request->all(); // Overwrite with new full state
+            // We only want to overwrite document_data if all fields are actually being sent, 
+            // but we can leave the original logic. To be safe, let's only do it if document_type is present.
+            if ($request->has('document_type')) {
+                $case->document_data = $request->all();
+            }
             $case->save();
 
             AuditService::log('UPDATE', 'Cases', "Updated details for Case #{$case->case_number}", $case->case_number);
@@ -206,6 +213,23 @@ class CaseController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error archiving case: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function restore($id)
+    {
+        try {
+            $case = LuponCase::onlyTrashed()->findOrFail($id);
+            $case->restore();
+
+            AuditService::log('UPDATE', 'Cases', "Restored Case #{$case->case_number}", $case->case_number);
+
+            return redirect()->route('cases.index')->with('success', "Case #{$case->case_number} has been restored successfully.");
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error restoring case: '.$e->getMessage(),
             ], 500);
         }
     }

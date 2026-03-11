@@ -1,4 +1,5 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { SharedData } from '@/types';
 import {
     Folder,
     Clock,
@@ -69,6 +70,8 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ stats, recentCases, statusDistribution, statusPercentages, typeStats, documentStats, monthlyStats }: DashboardProps) {
+    const { auth } = usePage<SharedData>().props;
+    const canEdit = auth.user.role !== 'Admin';
 
     const [year, setYear] = useState(new Date().getFullYear());
     const breadcrumbs = [
@@ -81,16 +84,20 @@ export default function Dashboard({ stats, recentCases, statusDistribution, stat
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
     const getStatusVariant = (status: string) => {
-        switch (status) {
-            case 'Resolved':
-            case 'Settled':
-                return 'secondary'; // Greenish usually
-            case 'Pending':
-                return 'outline';
-            case 'Dismissed':
-                return 'destructive';
+        switch (status?.toLowerCase()) {
+            case 'resolved':
+            case 'settled':
+                return 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400';
+            case 'pending':
+                return 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400';
+            case 'mediation':
+                return 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400';
+            case 'certified':
+                return 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400';
+            case 'dismissed':
+                return 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400';
             default:
-                return 'default';
+                return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-400';
         }
     };
 
@@ -211,7 +218,7 @@ export default function Dashboard({ stats, recentCases, statusDistribution, stat
                                                     <td className="py-3 px-2 text-muted-foreground">{item.complainant}</td>
                                                     <td className="py-3 px-2 text-muted-foreground">{item.date_filed}</td>
                                                     <td className="py-3 px-2">
-                                                        <Badge variant={getStatusVariant(item.status) as any} className="font-normal">
+                                                        <Badge variant="outline" className={`font-normal rounded-full border ${getStatusVariant(item.status)}`}>
                                                             {item.status}
                                                         </Badge>
                                                     </td>
@@ -429,46 +436,37 @@ export default function Dashboard({ stats, recentCases, statusDistribution, stat
                 </div>
 
                 {/* Quick Actions */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Quick Actions</CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                        <Button variant="outline" asChild className="h-auto py-4 justify-start space-x-4 hover:border-[#dd8b11] hover:bg-secondary/50 dark:hover:bg-secondary/80 group">
-                            <Link href="/cases">
-                                <div className="p-2 bg-transparent rounded-lg transition-colors border border-transparent">
-                                    <Plus className="h-5 w-5 text-black dark:text-white stroke-[2]" />
-                                </div>
-                                <div className="text-left">
-                                    <div className="font-semibold text-[#dd8b11] dark:text-white">New Case</div>
-                                    <div className="text-xs text-muted-foreground font-normal">File a new case</div>
-                                </div>
-                            </Link>
-                        </Button>
-                        <Button variant="outline" asChild className="h-auto py-4 justify-start space-x-4 hover:border-[#dd8b11] hover:bg-secondary/50 dark:hover:bg-secondary/80 group">
-                            <Link href="/system-reports">
-                                <div className="p-2 bg-transparent rounded-lg transition-colors border border-transparent">
-                                    <FileText className="h-5 w-5 text-black dark:text-white stroke-[2]" />
-                                </div>
-                                <div className="text-left">
-                                    <div className="font-semibold text-[#dd8b11] dark:text-white">Generate Report</div>
-                                    <div className="text-xs text-muted-foreground font-normal">Create summary</div>
-                                </div>
-                            </Link>
-                        </Button>
-                        <Button variant="outline" asChild className="h-auto py-4 justify-start space-x-4 hover:border-[#dd8b11] hover:bg-secondary/50 dark:hover:bg-secondary/80 group">
-                            <Link href="/documents">
-                                <div className="p-2 bg-transparent rounded-lg transition-colors border border-transparent">
-                                    <Printer className="h-5 w-5 text-black dark:text-white stroke-[2]" />
-                                </div>
-                                <div className="text-left">
-                                    <div className="font-semibold text-[#dd8b11] dark:text-white">Print Documents</div>
-                                    <div className="text-xs text-muted-foreground font-normal">Official forms</div>
-                                </div>
-                            </Link>
-                        </Button>
-                    </CardContent>
-                </Card>
+                {canEdit && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Quick Actions</CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            <Button variant="outline" asChild className="h-auto py-4 justify-start space-x-4 hover:border-[#dd8b11] hover:bg-secondary/50 dark:hover:bg-secondary/80 group">
+                                <Link href="/documents">
+                                    <div className="p-2 bg-transparent rounded-lg transition-colors border border-transparent">
+                                        <Plus className="h-5 w-5 text-black dark:text-white stroke-[2]" />
+                                    </div>
+                                    <div className="text-left">
+                                        <div className="font-semibold text-[#dd8b11] dark:text-white">New Case</div>
+                                        <div className="text-xs text-muted-foreground font-normal">File a new case</div>
+                                    </div>
+                                </Link>
+                            </Button>
+                            <Button variant="outline" asChild className="h-auto py-4 justify-start space-x-4 hover:border-[#dd8b11] hover:bg-secondary/50 dark:hover:bg-secondary/80 group">
+                                <Link href="/system-reports">
+                                    <div className="p-2 bg-transparent rounded-lg transition-colors border border-transparent">
+                                        <FileText className="h-5 w-5 text-black dark:text-white stroke-[2]" />
+                                    </div>
+                                    <div className="text-left">
+                                        <div className="font-semibold text-[#dd8b11] dark:text-white">Generate Report</div>
+                                        <div className="text-xs text-muted-foreground font-normal">Create summary</div>
+                                    </div>
+                                </Link>
+                            </Button>
+                        </CardContent>
+                    </Card>
+                )}
 
             </div>
         </AppLayout>

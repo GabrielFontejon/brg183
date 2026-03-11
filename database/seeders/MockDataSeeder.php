@@ -21,28 +21,28 @@ class MockDataSeeder extends Seeder
 
         // Map the 22 form types precisely to the 22 filenames in `resources/forms`
         $formNamesMap = [
-            'complaint' => 'Complaint Form',
-            'summons' => 'Summons Form',
-            'amicable_settlement' => 'Amicable Settlement Form',
-            'arbitration_award' => 'KP Form No. 17 Form',
-            'repudiation' => 'Repudation Form',
-            'affidavit_desistance' => 'Affidavit Of Desistance Form',
-            'affidavit_withdrawal' => 'Affidavit Of Withdrawal Form',
-            'hearing_conciliation' => 'Notice Of Hearing (Conciliation Proceedings) Form',
-            'hearing_mediation' => 'Notice Of Hearing (Mediation Proceedings) Form',
-            'hearing_failure_appear' => 'Notice Of Hearing (RE_ Failure To Appear) Form',
-            'hearing_failure_appear_counterclaim' => 'Notice Of Hearing (RE_ Failure To Appear) CounterClaim Form',
-            'cert_file_action' => 'Certification To File Action Form',
-            'cert_file_action_court' => 'Certification To File Action In Court Form',
-            'cert_bar_action' => 'Certification To Bar Action Form',
-            'cert_bar_counterclaim' => 'Certification To Bar CounterClaim',
-            'motion_execution' => 'Motion For Execution Form',
-            'notice_execution' => 'Notice Of Hearing (RE_ Motion For Execution) Form',
-            'notice_constitution' => 'Notice For The Constitution Of Pangkat Form',
-            'notice_chosen_member' => 'Notice To Chosen Pangkat Member Form',
-            'officers_return' => 'Officers Return Form',
-            'letter_of_demand' => 'Letter Of Demand Form',
-            'katunayan_pagkakasundo' => 'Katunayan Ng Pagkakasundo Form',
+            'complaint' => 'KP Form No. 7 – Formal complaint filing',
+            'summons' => 'KP Form No. 9 – Official notice to appear',
+            'amicable_settlement' => 'KP Form No. 16 – Agreement between parties',
+            'arbitration_award' => 'KP Form No. 15 – Decision by Pangkat/Chairman',
+            'repudiation' => 'KP Form No. 17 – Rejection of settlement',
+            'affidavit_desistance' => 'Statement to desist from complaint',
+            'affidavit_withdrawal' => 'Statement to withdraw complaint',
+            'hearing_conciliation' => 'Notice for Conciliation Proceedings',
+            'hearing_mediation' => 'Notice for Mediation Proceedings',
+            'hearing_failure_appear' => 'Failure to appear at hearing',
+            'hearing_failure_appear_counterclaim' => 'Failure to appear – Counterclaim',
+            'cert_file_action' => 'Authorization to file action',
+            'cert_file_action_court' => 'Authorization for court filing',
+            'cert_bar_action' => 'Barring future action',
+            'cert_bar_counterclaim' => 'Barring future counterclaim',
+            'motion_execution' => 'Request for enforcement of settlement/award',
+            'notice_execution' => 'Notice regarding execution of award',
+            'notice_constitution' => 'Official notice on Pangkat formation',
+            'notice_chosen_member' => 'Notice to individual Pangkat members',
+            'officers_return' => 'Record of summons or notice service',
+            'letter_of_demand' => 'Formal demand for action or payment',
+            'katunayan_pagkakasundo' => 'Official tagalog agreement certificate',
         ];
 
         $forms = array_keys($formNamesMap);
@@ -71,16 +71,31 @@ class MockDataSeeder extends Seeder
                 $respondent = $faker->name();
                 $mockName = $formNamesMap[$formType];
 
+                // Guarantee distribution across Jan, Feb, and March
+                if ($index < 15) {
+                    // Approximately 15 cases in January
+                    $dateFiled = $faker->dateTimeBetween('2026-01-01', '2026-01-31');
+                } elseif ($index < 30) {
+                    // Approximately 15 cases in February
+                    $dateFiled = $faker->dateTimeBetween('2026-02-01', '2026-02-28');
+                } else {
+                    // The rest (20 cases) in March
+                    $dateFiled = $faker->dateTimeBetween('2026-03-01', 'now');
+                }
+
+                $isSameMonth = ($dateFiled->format('Y-m') === date('Y-m'));
+
                 $case = LuponCase::create([
                     'case_number' => $caseNo,
-                    'title' => $mockName.' - '.date('Y-m-d'), // Added date to easily check the newly created records
-                    'nature_of_case' => $faker->randomElement(['Property Dispute', 'Noise Complaint', 'Debt Collection', 'Family Dispute']),
+                    'title' => $mockName,
+                    'nature_of_case' => $mockName,
                     'complainant' => $complainant,
                     'respondent' => $respondent,
                     'status' => $faker->randomElement(['Pending', 'Resolved', 'Mediation', 'Dismissed', 'Certified']),
-                    'date_filed' => date('Y-m-d'), // Set the date exactly to today for easy checking
+                    'date_filed' => $dateFiled->format('Y-m-d'),
                     'complaint_narrative' => 'This case pertains to a '.$mockName.'. '.$faker->paragraph(),
                     'created_by' => $user->id,
+                    'deleted_at' => $isSameMonth ? null : now(), // Automatically archive if not in the current month (March)
                 ]);
 
                 $content = [

@@ -1,9 +1,10 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { SharedData } from '@/types';
 import {
     FileText, Bell, FileCheck, FileMinus, Search, Download, Eye, Plus,
     Scale, AlertTriangle, Gavel, Handshake, Calendar, BadgeCheck, X,
     FileSignature, ClipboardCheck, UserPlus, Send, History, Trash2,
-    ClipboardList, Briefcase, ShieldAlert, BadgeInfo
+    ClipboardList, Briefcase, ShieldAlert, BadgeInfo, Edit
 } from 'lucide-react';
 
 const ICON_MAP: Record<string, any> = {
@@ -58,6 +59,14 @@ const TEMPLATES = [
     { title: 'Katunayan ng Pagkakasundo', description: 'Official tagalog agreement certificate', icon: FileCheck, type: 'katunayan_pagkakasundo' },
 ];
 
+// ─── Helpers ──────────────────────────────────────────────────────────────
+const getTemplateTitle = (type: string) => {
+    if (type === 'uploaded') return 'Uploaded Document';
+    if (type === 'custom_form' || type === 'custom') return 'Custom Form';
+    const template = TEMPLATES.find(t => t.type === type);
+    return template ? template.title : type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+};
+
 interface Document {
     id: number;
     type: string;
@@ -88,6 +97,9 @@ interface DocumentsProps {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function Documents({ documents, stats, customTemplates, hiddenTemplates }: DocumentsProps) {
+    const { auth } = usePage<SharedData>().props;
+    const canEdit = auth.user.role !== 'Admin';
+
     // Search filters templates
     const [search, setSearch] = useState('');
     // Filter for recent docs table only
@@ -121,12 +133,18 @@ export default function Documents({ documents, stats, customTemplates, hiddenTem
         );
     }, [search, allAvailableTemplates]);
 
-    // ── Filter recent documents by type dropdown ──────────────────────────────
+    // ── Filter recent documents by type dropdown and search ──────────────────────
     const filteredDocs = useMemo(() => {
-        return (documents ?? []).filter(doc =>
-            docFilter === 'all' || doc.type === docFilter
-        );
-    }, [documents, docFilter]);
+        const q = search.trim().toLowerCase();
+        return (documents ?? []).filter(doc => {
+            const matchesType = docFilter === 'all' || doc.type === docFilter;
+            const title = getTemplateTitle(doc.type).toLowerCase();
+            const caseNum = (doc.case_number ?? '').toLowerCase();
+            const creator = (doc.creator?.name ?? '').toLowerCase();
+            const matchesSearch = !q || title.includes(q) || caseNum.includes(q) || creator.includes(q);
+            return matchesType && matchesSearch;
+        });
+    }, [documents, docFilter, search]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -161,12 +179,14 @@ export default function Documents({ documents, stats, customTemplates, hiddenTem
                             )}
                         </div>
                         {/* Add Document → dedicated page */}
-                        <Link href="/documents/new">
-                            <Button id="add-document-btn" className="h-9 bg-[#dd8b11] hover:bg-[#c47c0f] text-white">
-                                <Plus className="mr-2 h-4 w-4" />
-                                Add Document
-                            </Button>
-                        </Link>
+                        {canEdit && (
+                            <Link href="/documents/new">
+                                <Button id="add-document-btn" className="h-9 bg-[#dd8b11] hover:bg-[#c47c0f] text-white">
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Add Document
+                                </Button>
+                            </Link>
+                        )}
                     </div>
                 </div>
 
@@ -219,58 +239,75 @@ export default function Documents({ documents, stats, customTemplates, hiddenTem
                             </div>
                         ) : (
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                {filteredTemplates.map((template, idx) => (
-                                    <div
-                                        key={template.isCustom ? `custom-${template.id}` : template.type}
-                                        className="flex items-start space-x-4 p-4 rounded-lg border bg-card hover:border-[#dd8b11]/30 hover:bg-[#dd8b11]/5 dark:hover:bg-[#dd8b11]/10 transition-all group"
-                                    >
-                                        <div className="p-2 bg-[#dd8b11] rounded-lg mt-1 flex-shrink-0 group-hover:bg-[#cb7d0f] transition-colors">
-                                            <template.icon className="h-4 w-4 text-white dark:text-black stroke-[2]" />
-                                        </div>
-                                        <div className="flex-1 space-y-1">
-                                            <p className="text-sm font-semibold leading-none">{template.title}</p>
-                                            <p className="text-xs text-muted-foreground">{template.description}</p>
-                                            <div className="flex items-center gap-2 mt-2">
-                                                <a
-                                                    href={template.isCustom ? `/documents/fill-custom/${template.id}` : `/documents/create/${template.type}`}
-                                                    target="_blank"
-                                                    className="inline-flex items-center gap-1.5 rounded-full text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90 h-7 px-3 shadow-sm transition-all active:scale-95"
-                                                    title="Fill Out and Generate"
-                                                >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
-                                                    Fill Out
-                                                </a>
+                                {filteredTemplates.map((template, idx) => {
+                                    const fillHref = template.isCustom ? `/documents/fill-custom/${template.id}` : `/documents/create/${template.type}`;
+                                    const editHref = template.isCustom ? `/documents/edit-template/${template.id}` : `/documents/edit-standard/${template.type}`;
 
-                                                <a
-                                                    href={template.isCustom ? `/documents/edit-template/${template.id}` : `/documents/edit-standard/${template.type}`}
-                                                    className="inline-flex items-center justify-center rounded-full h-7 w-7 text-muted-foreground hover:bg-muted hover:text-primary transition-colors"
-                                                    title="Edit Questions / Form Builder"
-                                                >
-                                                    <FileText className="h-4 w-4" />
-                                                </a>
-
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        const msg = template.isCustom
-                                                            ? 'Are you sure you want to delete this custom template?'
-                                                            : 'Are you sure you want to remove this standard template from the list?';
-
-                                                        if (confirm(msg)) {
-                                                            const url = `/documents/delete/${template.id || 0}`;
-                                                            const data = !template.isCustom ? { document_type: template.type } : {};
-                                                            router.post(url, data);
-                                                        }
-                                                    }}
-                                                    className="inline-flex items-center justify-center rounded-full h-7 w-7 text-muted-foreground hover:bg-red-50 hover:text-red-500 transition-colors ml-auto"
-                                                    title="Delete Template"
-                                                >
-                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                </button>
+                                    return (
+                                        <div
+                                            key={template.isCustom ? `custom-${template.id}` : template.type}
+                                            onClick={() => {
+                                                if (!canEdit) {
+                                                    // Admin role: redirect to Case Management with the specific filter
+                                                    const natureFilter = template.isCustom ? template.title : template.description;
+                                                    router.visit(`/cases?nature=${encodeURIComponent(natureFilter)}`);
+                                                } else {
+                                                    // Encoder role: open fill-out form in new tab
+                                                    window.open(fillHref, '_blank');
+                                                }
+                                            }}
+                                            className="flex items-start space-x-4 p-4 rounded-lg border bg-card hover:border-[#dd8b11]/30 hover:bg-[#dd8b11]/5 dark:hover:bg-[#dd8b11]/10 transition-all group cursor-pointer relative shadow-sm hover:shadow-md"
+                                        >
+                                            <div className="p-2 bg-[#dd8b11] rounded-lg mt-1 flex-shrink-0 group-hover:bg-[#cb7d0f] transition-colors">
+                                                <template.icon className="h-4 w-4 text-white dark:text-black stroke-[2]" />
                                             </div>
+                                            <div className="flex-1 space-y-1 pr-6">
+                                                <p className="text-sm font-semibold leading-none group-hover:text-[#dd8b11] transition-colors">{template.title}</p>
+                                                <p className="text-xs text-muted-foreground line-clamp-2">{template.description}</p>
+                                            </div>
+
+                                            {canEdit && (
+                                                <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                                    <a
+                                                        href={fillHref}
+                                                        target="_blank"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="inline-flex items-center justify-center rounded bg-[#dd8b11] text-white px-2.5 py-1 text-[10px] font-semibold tracking-wide hover:bg-[#c47c0f] transition-colors uppercase mr-1"
+                                                        title="Fill Out Form"
+                                                    >
+                                                        Fill Out
+                                                    </a>
+                                                    <a
+                                                        href={editHref}
+                                                        onClick={e => e.stopPropagation()}
+                                                        className="inline-flex items-center justify-center rounded-full h-7 w-7 text-muted-foreground hover:bg-muted hover:text-primary transition-colors"
+                                                        title="Word Editor"
+                                                    >
+                                                        <Edit className="h-3.5 w-3.5" />
+                                                    </a>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const msg = template.isCustom
+                                                                ? 'Are you sure you want to delete this custom template?'
+                                                                : 'Are you sure you want to remove this standard template from the list?';
+
+                                                            if (confirm(msg)) {
+                                                                const url = `/documents/delete/${template.id || 0}`;
+                                                                const data = !template.isCustom ? { document_type: template.type } : {};
+                                                                router.post(url, data);
+                                                            }
+                                                        }}
+                                                        className="inline-flex items-center justify-center rounded-full h-7 w-7 text-muted-foreground hover:bg-red-50 hover:text-red-500 transition-colors"
+                                                        title="Delete Template"
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </CardContent>
@@ -290,16 +327,18 @@ export default function Documents({ documents, stats, customTemplates, hiddenTem
                                 id="doc-filter-type"
                                 value={docFilter}
                                 onChange={e => setDocFilter(e.target.value)}
-                                className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                                className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring max-w-[200px]"
                             >
                                 <option value="all">All Types</option>
-                                <option value="complaint">Complaint</option>
-                                <option value="summons">Summons</option>
-                                <option value="amicable_settlement">Settlement</option>
-                                <option value="arbitration_award">Arbitration Award</option>
-                                <option value="cert_file_action">Certificate</option>
-                                <option value="custom_form">Custom Form</option>
-                                <option value="uploaded">Uploaded</option>
+                                <optgroup label="Standard Forms">
+                                    {TEMPLATES.map(t => (
+                                        <option key={t.type} value={t.type}>{t.title}</option>
+                                    ))}
+                                </optgroup>
+                                <optgroup label="Other">
+                                    <option value="custom_form">Custom Form</option>
+                                    <option value="uploaded">Uploaded</option>
+                                </optgroup>
                             </select>
                             {docFilter !== 'all' && (
                                 <Button
@@ -311,12 +350,14 @@ export default function Documents({ documents, stats, customTemplates, hiddenTem
                                     <X className="h-3 w-3 mr-1" /> Clear
                                 </Button>
                             )}
-                            <Link href="/documents/new">
-                                <Button className="h-9 bg-[#dd8b11] hover:bg-[#c47c0f] text-white">
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Add Document
-                                </Button>
-                            </Link>
+                            {canEdit && (
+                                <Link href="/documents/new">
+                                    <Button className="h-9 bg-[#dd8b11] hover:bg-[#c47c0f] text-white">
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Add Document
+                                    </Button>
+                                </Link>
+                            )}
                         </div>
                     </CardHeader>
                     <CardContent>
@@ -359,7 +400,12 @@ export default function Documents({ documents, stats, customTemplates, hiddenTem
                                                         <div className="p-2 bg-[#dd8b11] rounded-lg flex-shrink-0">
                                                             <FileText className="h-4 w-4 text-white dark:text-black stroke-[2]" />
                                                         </div>
-                                                        {doc.type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                                                        <div className="flex flex-col">
+                                                            <span className="font-semibold text-xs">{getTemplateTitle(doc.type)}</span>
+                                                            <span className="text-[10px] text-muted-foreground uppercase opacity-70">
+                                                                {doc.type.replace(/_/g, ' ')}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3 text-muted-foreground font-mono text-xs">
@@ -402,18 +448,20 @@ export default function Documents({ documents, stats, customTemplates, hiddenTem
                                                         >
                                                             <Download className="h-4 w-4" />
                                                         </button>
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.preventDefault();
-                                                                if (confirm('Are you sure you want to delete this document?')) {
-                                                                    router.post(`/documents/delete/${doc.id}`);
-                                                                }
-                                                            }}
-                                                            title="Delete Document"
-                                                            className="inline-flex items-center justify-center rounded-md h-9 w-9 hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors"
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </button>
+                                                        {canEdit && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    if (confirm('Are you sure you want to delete this document?')) {
+                                                                        router.post(`/documents/delete/${doc.id}`);
+                                                                    }
+                                                                }}
+                                                                title="Delete Document"
+                                                                className="inline-flex items-center justify-center rounded-md h-9 w-9 hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </td>
                                             </tr>

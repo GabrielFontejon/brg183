@@ -250,20 +250,35 @@
     <div id="floating-container" class="fixed bottom-6 right-6 flex flex-col items-end gap-2 z-50">
 
         <!-- Action Buttons -->
-        <div id="floating-actions" class="flex flex-col gap-3 transition-all duration-300 origin-bottom">
+        <div id="floating-actions" class="flex flex-col gap-3 transition-all duration-300 origin-bottom items-end">
             @if($readonly ?? false)
-                <button type="button" onclick="enableEditing()" id="btn-enable-edit"
-                    class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg font-medium flex items-center gap-2 transition-transform hover:scale-105">
-                    <span class="material-icons-outlined">edit</span>
-                    <span>Edit Case</span>
-                </button>
+                @if(auth()->user()->role !== 'Admin')
+                {{-- Process / Status Updater Inline (Encoder only) --}}
+                <div class="bg-white p-4 rounded-xl shadow-lg border border-gray-200 w-64 mb-1 text-left">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Process / Status</label>
+                    <div class="flex flex-col gap-2">
+                        <select id="case-status-select" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-50 text-sm py-2 px-3 border">
+                            <option value="Pending" {{ ($case->status ?? '') == 'Pending' ? 'selected' : '' }}>Pending</option>
+                            <option value="Mediation" {{ ($case->status ?? '') == 'Mediation' ? 'selected' : '' }}>Mediation</option>
+                            <option value="Resolved" {{ ($case->status ?? '') == 'Resolved' ? 'selected' : '' }}>Resolved</option>
+                            <option value="Dismissed" {{ ($case->status ?? '') == 'Dismissed' ? 'selected' : '' }}>Dismissed</option>
+                            <option value="Certified" {{ ($case->status ?? '') == 'Certified' ? 'selected' : '' }}>Certified</option>
+                        </select>
+                        <button type="button" onclick="updateStatus()" id="btn-update-status"
+                            class="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium text-sm flex justify-center items-center gap-2 transition-all shadow-sm">
+                            <span class="material-icons-outlined text-sm">save</span>
+                            <span>Update Status</span>
+                        </button>
+                    </div>
+                </div>
+                @endif
                 <button type="button" onclick="submitForm()"
-                    class="px-6 py-3 bg-[#1c2434] hover:bg-[#2c3a4f] text-white rounded-full shadow-lg font-medium flex items-center gap-2 transition-transform hover:scale-105">
-                    <span class="material-icons-outlined">picture_as_pdf</span>
-                    <span>Print / Download</span>
+                    class="px-6 py-3 bg-[#1c2434] hover:bg-[#2c3a4f] text-white rounded-full shadow-lg font-medium flex items-center justify-center w-full gap-2 transition-transform hover:scale-105">
+                    <span class="material-icons-outlined">print</span>
+                    <span>Print Document</span>
                 </button>
-                <button type="button" onclick="window.close()"
-                    class="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-full shadow-lg font-medium flex items-center gap-2 transition-transform hover:scale-105">
+                <button type="button" onclick="if(document.referrer) { window.location.href = document.referrer; } else { window.history.back(); window.close(); window.location.href = '/cases'; }"
+                    class="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-full shadow-lg font-medium flex items-center justify-center w-full gap-2 transition-transform hover:scale-105">
                     <span class="material-icons-outlined">close</span>
                     <span>Close</span>
                 </button>
@@ -448,7 +463,7 @@
     <form id="doc-form" action="{{ route('documents.generate') }}" method="POST" target="_blank" class="hidden">
         @csrf
         <input type="hidden" name="type" value="{{ $type }}">
-        <input type="hidden" name="action" value="download">
+        <input type="hidden" name="action" value="preview">
         <input type="hidden" name="layout_overrides" id="layout-overrides">
         <div id="hidden-inputs-container"></div>
     </form>
@@ -456,26 +471,54 @@
 
     <!-- Scripts -->
     <script>
-        @if($missingData ?? false)
-            alert('Notice: No document data found for this case. Showing default form.');
-        @endif
+
 
         const isReadonly = {{ ($readonly ?? false) ? 'true' : 'false' }};
         const caseId = {{ $case->id ?? 'null' }};
         let isEditing = false;
 
-        function enableEditing() {
-            isEditing = true;
-            // Enable contenteditable
-            document.querySelectorAll('.doc-field').forEach(el => {
-                if (el.getAttribute('data-type') !== 'checkbox') {
-                    el.setAttribute('contenteditable', 'true');
-                    el.style.cursor = 'text';
-                }
-            });
+        function updateStatus() {
+            const status = document.getElementById('case-status-select').value;
+            const btn = document.getElementById('btn-update-status');
+            const originalContent = btn.innerHTML;
 
-            // Reload page with readonly=false (edit mode)
-            window.location.href = window.location.pathname + '?mode=edit';
+            btn.innerHTML = '<span class="material-icons-outlined animate-spin text-sm">refresh</span> <span class="text-sm">Updating...</span>';
+            btn.disabled = true;
+            btn.classList.add('opacity-75');
+
+            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            fetch(`/cases/${caseId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': token
+                },
+                body: JSON.stringify({
+                    status: status
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    btn.innerHTML = '<span class="material-icons-outlined text-sm">check</span> <span class="text-sm">Updated</span>';
+                    btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                    btn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    alert('Error: ' + data.message);
+                    throw new Error(data.message);
+                }
+            })
+            .catch(error => {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+                btn.classList.remove('opacity-75', 'bg-emerald-600', 'hover:bg-emerald-700');
+                btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            });
         }
 
         // Disable editing in readonly mode (initial)

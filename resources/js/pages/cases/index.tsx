@@ -77,6 +77,9 @@ interface Props {
 }
 
 export default function CaseManagement({ cases, filters }: Props) {
+    const { auth } = usePage<{ auth: { user: { role: string } } }>().props;
+    const isAdmin = auth?.user?.role === 'Admin';
+
     const breadcrumbs = [
         {
             title: 'Case Management',
@@ -145,16 +148,20 @@ export default function CaseManagement({ cases, filters }: Props) {
     };
 
     const getBadgeStyles = (status: string) => {
-        switch (status) {
-            case 'Resolved':
-                return 'bg-slate-200 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 border-0';
-            case 'Pending':
-                return 'bg-slate-100 text-slate-600 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-400 border border-slate-200 dark:border-slate-700';
-            case 'Mediation':
-                return 'bg-slate-200 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 border-0';
+        switch (status?.toLowerCase()) {
+            case 'resolved':
+            case 'settled':
+                return 'bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800';
+            case 'pending':
+                return 'bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800';
+            case 'mediation':
+                return 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800';
+            case 'certified':
+                return 'bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800';
+            case 'dismissed':
+                return 'bg-red-100 text-red-700 border-red-200 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800';
             default:
-                // Fallback for custom statuses
-                return 'bg-slate-100 text-slate-600 hover:bg-slate-100 border border-slate-200';
+                return 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700';
         }
     };
 
@@ -228,10 +235,28 @@ export default function CaseManagement({ cases, filters }: Props) {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">All Types</SelectItem>
-                                        <SelectItem value="property">Property Dispute</SelectItem>
-                                        <SelectItem value="noise">Noise Complaint</SelectItem>
-                                        <SelectItem value="money">Debt Collection</SelectItem>
-                                        <SelectItem value="family">Family Dispute</SelectItem>
+                                        <SelectItem value="KP Form No. 7 – Formal complaint filing">Complaint Form (KP Form 7)</SelectItem>
+                                        <SelectItem value="KP Form No. 9 – Official notice to appear">Summons (KP Form 9)</SelectItem>
+                                        <SelectItem value="KP Form No. 16 – Agreement between parties">Amicable Settlement (KP Form 16)</SelectItem>
+                                        <SelectItem value="KP Form No. 15 – Decision by Pangkat/Chairman">Arbitration Award (KP Form 15)</SelectItem>
+                                        <SelectItem value="KP Form No. 17 – Rejection of settlement">Repudiation (KP Form 17)</SelectItem>
+                                        <SelectItem value="Statement to desist from complaint">Affidavit of Desistance</SelectItem>
+                                        <SelectItem value="Statement to withdraw complaint">Affidavit of Withdrawal</SelectItem>
+                                        <SelectItem value="Notice for Conciliation Proceedings">Notice of Hearing (Conciliation)</SelectItem>
+                                        <SelectItem value="Notice for Mediation Proceedings">Notice of Hearing (Mediation)</SelectItem>
+                                        <SelectItem value="Failure to appear at hearing">Notice of Hearing (Fail. to Appear)</SelectItem>
+                                        <SelectItem value="Failure to appear – Counterclaim">Notice of Hearing (Counterclaim)</SelectItem>
+                                        <SelectItem value="Authorization to file action">Certificate to File Action</SelectItem>
+                                        <SelectItem value="Authorization for court filing">Certificate to File Action (Court)</SelectItem>
+                                        <SelectItem value="Barring future action">Certificate to Bar Action</SelectItem>
+                                        <SelectItem value="Barring future counterclaim">Certificate to Bar Counterclaim</SelectItem>
+                                        <SelectItem value="Request for enforcement of settlement/award">Motion for Execution</SelectItem>
+                                        <SelectItem value="Notice regarding execution of award">Notice of Hearing (Execution)</SelectItem>
+                                        <SelectItem value="Official notice on Pangkat formation">Notice for Constitution of Pangkat</SelectItem>
+                                        <SelectItem value="Notice to individual Pangkat members">Notice to Chosen Pangkat Member</SelectItem>
+                                        <SelectItem value="Record of summons or notice service">Officers Return</SelectItem>
+                                        <SelectItem value="Formal demand for action or payment">Letter of Demand</SelectItem>
+                                        <SelectItem value="Official tagalog agreement certificate">Katunayan ng Pagkakasundo</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -270,10 +295,6 @@ export default function CaseManagement({ cases, filters }: Props) {
                             <Button variant="outline" size="sm" onClick={() => router.visit('/cases/archive')}>
                                 <Archive className="mr-2 h-4 w-4" />
                                 View Archives
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => window.print()}>
-                                <Printer className="mr-2 h-4 w-4" />
-                                Print
                             </Button>
                         </div>
                     </div>
@@ -318,6 +339,21 @@ export default function CaseManagement({ cases, filters }: Props) {
                                                     <Button variant="ghost" size="icon" title="View Details" onClick={() => router.visit(`/documents/view-case/${item.id}`)}>
                                                         <Eye className="h-4 w-4" />
                                                     </Button>
+                                                    {!isAdmin && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            title="Archive Case"
+                                                            className="text-amber-500 hover:text-amber-700 hover:bg-amber-50"
+                                                            onClick={() => {
+                                                                if (confirm(`Archive case ${item.case_number}? It will be moved to the archive.`)) {
+                                                                    router.post(`/cases/${item.id}/archive`, {}, { preserveState: false });
+                                                                }
+                                                            }}
+                                                        >
+                                                            <Archive className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
                                                     {item.creator && (
                                                         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800" title={`Encoded by: ${item.creator.name}`}>
                                                             <span className="text-xs font-medium text-slate-600 dark:text-slate-400">

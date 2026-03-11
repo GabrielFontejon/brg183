@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mxfile version="21.6.8">
+  <diagram id="flowchart" name="Lupon Architecture">
+    <mxGraphModel dx="2000" dy="2000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1600">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="Start" value="User Logs In" style="ellipse;whiteSpace=wrap;html=1;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="540" y="40" width="120" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="AuthCheck" value="Role Authentication" style="rhombus;whiteSpace=wrap;html=1;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="540" y="140" width="120" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="Start" target="AuthCheck">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="AdminHub" value="Admin&#10;Dashboard" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="240" y="240" width="160" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="EncoderHub" value="Encoder&#10;Dashboard" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="840" y="240" width="160" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2" value="Admin Role" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="AuthCheck" target="AdminHub">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3" value="Encoder Role" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="AuthCheck" target="EncoderHub">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="AdminContainer" value="Admin Actions&#10;(Admin Exclusive)" style="swimlane;whiteSpace=wrap;html=1;startSize=30;fontStyle=1;fontSize=14;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="100" y="360" width="300" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="UserMgmt" value="User Management&#10;Add, Edit, Disable Users" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="150" y="420" width="200" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="AuditTrail" value="Audit Trail&#10;View System Logs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="150" y="490" width="200" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="e4" value="Manage" style="edgeStyle=orthogonalEdgeStyle;rounded=0;jettySize=auto;html=1;" edge="1" parent="1" source="AdminHub" target="AdminContainer">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="EncoderContainer" value="Encoder Actions&#10;(Encoder Exclusive)" style="swimlane;whiteSpace=wrap;html=1;startSize=30;fontStyle=1;fontSize=14;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="800" y="360" width="540" height="440" as="geometry"/>
+        </mxCell>
+        <mxCell id="CaseContainer" value="Case Management" style="swimlane;whiteSpace=wrap;html=1;startSize=30;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="820" y="420" width="240" height="360" as="geometry"/>
+        </mxCell>
+        <mxCell id="AddCase" value="Add New Case" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="840" y="470" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="UpdateCase" value="Update Case" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="840" y="520" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="ArchiveCase" value="Archive / Restore" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="840" y="570" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="DeleteCase" value="Permanently Delete" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="840" y="620" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="BulkDelete" value="Bulk Delete" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="840" y="670" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="DocContainer" value="Document Management" style="swimlane;whiteSpace=wrap;html=1;startSize=30;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1080" y="420" width="240" height="360" as="geometry"/>
+        </mxCell>
+        <mxCell id="UploadDoc" value="Upload DOCX" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1100" y="470" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="EditTemp" value="Edit Templates&#10;Word Editor" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1100" y="520" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="CreateCustomDoc" value="Create Custom Layouts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1100" y="570" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="FillForm" value="Fill Application Forms" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1100" y="620" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="GenPDF" value="Generate Editable PDF" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1100" y="670" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="GenWord" value="Generate Word Doc" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1100" y="720" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="e5" value="Manage" style="edgeStyle=orthogonalEdgeStyle;rounded=0;jettySize=auto;html=1;" edge="1" parent="1" source="EncoderHub" target="EncoderContainer">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="SharedContainer" value="Shared Modules&#10;(Read Capabilities)" style="swimlane;whiteSpace=wrap;html=1;startSize=30;fontStyle=1;fontSize=14;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="440" y="360" width="320" height="440" as="geometry"/>
+        </mxCell>
+        <mxCell id="Dash" value="Dashboard Metrics" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="500" y="420" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="ViewCases" value="View Active/Archived Cases" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="500" y="470" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="ViewDocs" value="View Documents" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="500" y="520" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="ViewCasesDocs" value="View Case-Specific Docs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="500" y="570" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="Analytics" value="System Analytics" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="500" y="620" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="SysReports" value="System Reports Generator" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="500" y="670" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="Ltia" value="LTIA Module" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="500" y="720" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="e6" value="Read/View" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="AdminHub" target="SharedContainer">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e7" value="Read/View" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="EncoderHub" target="SharedContainer">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="DbContainer" value="Database Storage (Models)" style="swimlane;whiteSpace=wrap;html=1;startSize=30;fontStyle=1;fontSize=14;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="440" y="840" width="320" height="340" as="geometry"/>
+        </mxCell>
+        <mxCell id="DbUsers" value="Users Table" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="540" y="880" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="DbCases" value="LuponCases Table" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="540" y="940" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="DbDocs" value="Documents &amp; FormLayouts" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="540" y="1000" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="DbAudit" value="AuditLogs Table" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="540" y="1060" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="e8" value="C/R/U/D" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;fontColor=#666666;entryX=0;entryY=0.5;" edge="1" parent="1" source="UserMgmt" target="DbUsers">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e9" value="Save" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;fontColor=#666666;exitX=0;exitY=0.5;" edge="1" parent="1" source="AddCase" target="DbCases">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e10" value="Query" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;fontColor=#666666;" edge="1" parent="1" source="ViewCases" target="DbCases">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e11" value="Store" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;fontColor=#666666;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="UploadDoc" target="DbDocs">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e12" value="Query" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;fontColor=#666666;" edge="1" parent="1" source="ViewDocs" target="DbDocs">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e13" value="Query" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;fontColor=#666666;entryX=0;entryY=0.5;" edge="1" parent="1" source="AuditTrail" target="DbAudit">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ActionNote" value="All Application C/R/U/D Actions" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#f5f5f5;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="130" y="1050" width="240" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="e14" value="Automatic Audit Logging" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;fontColor=#666666;entryX=0;entryY=0.5;" edge="1" parent="1" source="ActionNote" target="DbAudit">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

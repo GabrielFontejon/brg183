@@ -188,15 +188,7 @@ export default function PersonnelPage({ users, filters, stats }: Props) {
 
     const rolesList = [
         "Data Encoder",
-        "Summoner",
-        "Lupon Custodian",
-        "Pangkat Member",
-        "Pangkat Secretary",
-        "Pangkat Chairman",
-        "Asst. Lupon Head",
-        "Lupon Head",
-        "Lupon Secretary",
-        "Lupon Chairman"
+        "Admin",
     ];
 
     const dutyGroups = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];

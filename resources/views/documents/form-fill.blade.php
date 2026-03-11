@@ -1092,7 +1092,7 @@
 
         @php
             // Group fields into sections - some are "footer" fields
-            $footerNames = ['made_this_1','made_this_2','made_this_3','made_this_day','made_this_month','year','notary'];
+            $footerNames = ['made_this_1','made_this_2','made_this_3','made_this_date_picker','made_this_day','made_this_month','year','notary'];
             $mainFields = array_filter($fields, fn($f) => !in_array($f['name'], $footerNames));
             $footerFields = array_filter($fields, fn($f) => in_array($f['name'], $footerNames));
 
@@ -1274,6 +1274,50 @@
                 $label = $field['label'] ?? $fieldLabels[$fieldName] ?? ucwords(str_replace('_', ' ', $fieldName));
                 $hint = $field['placeholder'] ?? $field['hint'] ?? $fieldHints[$fieldName] ?? '';
             @endphp
+            @if(isset($field['type']) && $field['type'] === 'hidden')
+                <input type="hidden" name="{{ $fieldName }}" id="field-{{ $fieldName }}" value="{{ $fieldDefault }}">
+            @elseif(isset($field['type']) && $field['type'] === 'date_split')
+            <div class="form-card">
+                <div class="question-card-inner">
+                    <div class="question-label">{{ $label }} <span class="required-star">*</span></div>
+                    <div class="question-hint">Select a date to automatically fill Day, Month, and Year</div>
+                    <div class="input-wrap">
+                        <input
+                            type="date"
+                            class="form-input"
+                            id="field-{{ $fieldName }}"
+                            style="cursor: pointer; color: var(--text-primary);"
+                            onchange="
+                                var d = new Date(this.value + 'T00:00:00');
+                                if (!isNaN(d)) {
+                                    var df = document.getElementById('field-made_this_day');
+                                    var mf = document.getElementById('field-made_this_month');
+                                    var yf = document.getElementById('field-year');
+                                    
+                                    function nth(d) {
+                                        if (d > 3 && d < 21) return d + 'th';
+                                        switch (d % 10) {
+                                            case 1:  return d + 'st';
+                                            case 2:  return d + 'nd';
+                                            case 3:  return d + 'rd';
+                                            default: return d + 'th';
+                                        }
+                                    }
+                                    
+                                    var dayStr = nth(d.getDate());
+                                    var monthStr = ['January','February','March','April','May','June','July','August','September','October','November','December'][d.getMonth()];
+                                    var yearStr = d.getFullYear().toString().slice(-2);
+                                    
+                                    if(df) { df.value = dayStr; df.dispatchEvent(new Event('input', { bubbles: true })); }
+                                    if(mf) { mf.value = monthStr; mf.dispatchEvent(new Event('input', { bubbles: true })); }
+                                    if(yf) { yf.value = yearStr; yf.dispatchEvent(new Event('input', { bubbles: true })); }
+                                }
+                            "
+                        >
+                    </div>
+                </div>
+            </div>
+            @else
             <div class="form-card">
                 <div class="question-card-inner">
                     <div class="question-label">{{ $label }}</div>
@@ -1293,6 +1337,7 @@
                     </div>
                 </div>
             </div>
+            @endif
         @endforeach
         @endif
 
@@ -1323,6 +1368,9 @@
                             @php
                                 $fn = $field['name'] ?? $field['id'] ?? 'field_' . $loop->index;
                                 $fd = $field['default'] ?? '';
+                                $fieldType = $field['type'] ?? '';
+                                // Skip hidden/date_split fields from the preview (they don't need to show)
+                                if (in_array($fieldType, ['hidden', 'date_split'])) continue;
                                 $styles = "top:{$field['y']};left:{$field['x']};width:{$field['w']};";
                                 if(isset($field['class'])) {
                                     if(str_contains($field['class'],'text-right')) $styles .= 'text-align:right;';

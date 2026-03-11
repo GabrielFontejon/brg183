@@ -8,12 +8,12 @@ class FormLayouts
     {
         // Common footer fields used in most forms
         $footerFields = [
-            ['name' => 'made_this_1',     'label' => 'Place (City/Municipality)', 'x' => '18%',   'y' => '74%',   'w' => '19%', 'h' => 'auto', 'class' => 'text-center'],
-            ['name' => 'made_this_2',     'label' => 'Province',                  'x' => '43%',   'y' => '74%',   'w' => '19%', 'h' => 'auto', 'class' => 'text-center'],
-            ['name' => 'made_this_3',     'label' => 'Philippines',               'x' => '65.5%', 'y' => '74%',   'w' => '8%',  'h' => 'auto', 'class' => 'text-center'],
-            ['name' => 'made_this_day',   'label' => 'Day',                       'x' => '28.5%', 'y' => '80%',   'w' => '15%', 'h' => 'auto', 'class' => 'text-center'],
-            ['name' => 'made_this_month', 'label' => 'Month',                     'x' => '50%',   'y' => '80%',   'w' => '20%', 'h' => 'auto', 'class' => 'text-left'],
-            ['name' => 'year',            'label' => 'Year',                      'x' => '67%',   'y' => '80.5%', 'w' => '10%', 'h' => 'auto', 'class' => 'text-left'],
+            ['name' => 'made_this_1',     'label' => 'Place (City/Municipality)', 'default' => 'Pasay City, Brgy 183 Villamor', 'type' => 'hidden', 'x' => '10%',   'y' => '74%',   'w' => '30%', 'h' => 'auto', 'class' => 'text-center'],
+            ['name' => 'made_this_2',     'label' => 'Province',                  'default' => 'Metro Manila', 'type' => 'hidden', 'x' => '43%',   'y' => '74%',   'w' => '19%', 'h' => 'auto', 'class' => 'text-center'],
+            ['name' => 'made_this_date_picker', 'label' => 'Date',                'type' => 'date_split', 'x' => '-100%', 'y' => '-100%', 'w' => '0%'],
+            ['name' => 'made_this_day',   'label' => 'Day',                       'type' => 'hidden', 'x' => '28.5%', 'y' => '80%',   'w' => '15%', 'h' => 'auto', 'class' => 'text-center'],
+            ['name' => 'made_this_month', 'label' => 'Month',                     'type' => 'hidden', 'x' => '50%',   'y' => '80%',   'w' => '20%', 'h' => 'auto', 'class' => 'text-left'],
+            ['name' => 'year',            'label' => 'Year',                      'type' => 'hidden', 'x' => '67%',   'y' => '80.5%', 'w' => '10%', 'h' => 'auto', 'class' => 'text-left'],
         ];
 
         $layouts = [

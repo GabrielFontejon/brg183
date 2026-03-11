@@ -1,5 +1,6 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { useRef } from 'react';
+import type { SharedData } from '@/types';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -17,7 +18,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 export default function DeleteUser() {
+    const { auth } = usePage<SharedData>().props;
     const passwordInput = useRef<HTMLInputElement>(null);
+
+    // Only Admins are allowed to delete their own accounts in this system as requested
+    if (auth.user.role !== 'Admin') {
+        return null;
+    }
 
     return (
         <div className="space-y-6">

@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
     LayoutGrid,
     Briefcase,
@@ -28,6 +28,7 @@ import {
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 import AppLogo from './app-logo';
+import { SharedData } from '@/types';
 
 const mainNavItems: NavItem[] = [
     {
@@ -71,6 +72,15 @@ const mainNavItems: NavItem[] = [
 export function AppSidebar() {
     const { state, toggleSidebar } = useSidebar();
     const isCollapsed = state === 'collapsed';
+    const { auth } = usePage<SharedData>().props;
+    const userRole = auth.user.role;
+
+    const filteredNavItems = mainNavItems.filter((item) => {
+        if (userRole === 'Encoder') {
+            return !['Audit Trail', 'Users'].includes(item.title);
+        }
+        return true;
+    });
 
     return (
         <Sidebar collapsible="offcanvas" variant="sidebar">
@@ -85,7 +95,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain items={filteredNavItems} />
             </SidebarContent>
 
             <SidebarFooter>

@@ -108,9 +108,13 @@ export default function ArchiveManagement({ cases, filters }: Props) {
     };
 
     const restoreCase = (caseItem: Case) => {
-        if (confirm('Are you sure you want to restore this case?')) {
-            alert("Restore functionality coming in Phase 2 (Audit Trail)");
-            // Once backend is ready: router.post(`/cases/${caseItem.id}/restore`);
+        if (confirm(`Restore case ${caseItem.case_number}? It will be moved back to Case Management.`)) {
+            router.post(`/cases/${caseItem.id}/restore`, {}, {
+                preserveState: false,
+                onSuccess: () => {
+                    router.visit('/cases');
+                },
+            });
         }
     };
 

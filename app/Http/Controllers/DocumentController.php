@@ -139,6 +139,14 @@ class DocumentController extends Controller
         $savedLayout = FormLayout::where('document_type', $type)->first();
         if ($savedLayout) {
             $fields = $savedLayout->layout_json;
+            // Merge in any footer fields missing from the saved layout (e.g. new date_split field)
+            $freshFields = FormLayouts::getLayout($type);
+            $savedNames = array_column($fields, 'name');
+            foreach ($freshFields as $ff) {
+                if (!in_array($ff['name'], $savedNames)) {
+                    $fields[] = $ff;
+                }
+            }
         } else {
             $fields = FormLayouts::getLayout($type);
         }
@@ -224,7 +232,19 @@ class DocumentController extends Controller
 
         // Get Layout
         $savedLayout = FormLayout::where('document_type', $type)->first();
-        $fields = $savedLayout ? $savedLayout->layout_json : FormLayouts::getLayout($type);
+        if ($savedLayout) {
+            $fields = $savedLayout->layout_json;
+            // Merge any missing footer fields (e.g. new date_split)
+            $freshFields = FormLayouts::getLayout($type);
+            $savedNames = array_column($fields, 'name');
+            foreach ($freshFields as $ff) {
+                if (!in_array($ff['name'], $savedNames)) {
+                    $fields[] = $ff;
+                }
+            }
+        } else {
+            $fields = FormLayouts::getLayout($type);
+        }
 
         // Populate fields with saved form data
         foreach ($fields as &$field) {
@@ -263,7 +283,19 @@ class DocumentController extends Controller
 
         // Get Layout
         $savedLayout = FormLayout::where('document_type', $type)->first();
-        $fields = $savedLayout ? $savedLayout->layout_json : FormLayouts::getLayout($type);
+        if ($savedLayout) {
+            $fields = $savedLayout->layout_json;
+            // Merge any missing footer fields (e.g. new date_split)
+            $freshFields = FormLayouts::getLayout($type);
+            $savedNames = array_column($fields, 'name');
+            foreach ($freshFields as $ff) {
+                if (!in_array($ff['name'], $savedNames)) {
+                    $fields[] = $ff;
+                }
+            }
+        } else {
+            $fields = FormLayouts::getLayout($type);
+        }
 
         // Populate fields with saved data and apply overrides
         foreach ($fields as &$field) {
