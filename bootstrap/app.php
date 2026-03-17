@@ -29,13 +29,36 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->stopIgnoring([\Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class]);
+
         $exceptions->reportable(function (\Throwable $e) {
             try {
+                $action = 'SYSTEM_ERROR';
+                $module = 'System Kernel';
+                
+                if ($e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException) {
+                    $action = 'PAGE_NOT_FOUND';
+                    $module = 'Website Navigation';
+                } elseif ($e instanceof \Illuminate\Database\QueryException) {
+                    $action = 'DATABASE_ERROR';
+                    $module = 'Database System';
+                } elseif ($e instanceof \Illuminate\Validation\ValidationException) {
+                    $action = 'VALIDATION_FAILED';
+                    $module = 'Form Submission';
+                } elseif ($e instanceof \Illuminate\Auth\AuthenticationException || $e instanceof \Illuminate\Auth\Access\AuthorizationException) {
+                    $action = 'ACCESS_DENIED';
+                    $module = 'Authentication & Security';
+                }
+
+                $url = request()->fullUrl() ?? 'Unknown URL';
+                $details = "Path: {$url} | Exception: " . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine();
+
                 \App\Services\AuditService::log(
-                    'ERROR',
-                    'System',
-                    'Exception: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine(),
-                    null
+                    $action,
+                    $module,
+                    substr($details, 0, 1000), // Prevent DB overflow
+                    null,
+                    \Illuminate\Support\Facades\Auth::check() ? \Illuminate\Support\Facades\Auth::id() : null
                 );
             } catch (\Exception $auditError) {
                 // Fail silently if audit logging itself fails during an exception

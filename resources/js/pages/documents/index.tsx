@@ -97,7 +97,7 @@ interface DocumentsProps {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function Documents({ documents, stats, customTemplates, hiddenTemplates }: DocumentsProps) {
     const { auth } = usePage<SharedData>().props;
-    const canEdit = auth.user.role !== 'Admin';
+    const canEdit = auth.user.role !== 'Administrator';
 
     // Search filters templates
     const [search, setSearch] = useState('');
@@ -246,7 +246,7 @@ export default function Documents({ documents, stats, customTemplates, hiddenTem
                                             key={template.isCustom ? `custom-${template.id}` : template.type}
                                             onClick={() => {
                                                 if (!canEdit) {
-                                                    // Admin role: redirect to Case Management with the specific filter
+                                                    // Administrator role: redirect to Case Management with the specific filter
                                                     const natureFilter = template.isCustom ? template.title : template.description;
                                                     router.visit(`/cases?nature=${encodeURIComponent(natureFilter)}`);
                                                 } else {

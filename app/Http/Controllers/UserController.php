@@ -16,7 +16,7 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $query = User::query();
+        $query = User::with('roles');
 
         // Search
         if ($request->filled('search')) {
@@ -29,7 +29,10 @@ class UserController extends Controller
 
         // Filter by Role
         if ($request->filled('role') && $request->input('role') !== 'all') {
-            $query->where('role', $request->input('role'));
+            $roleName = $request->input('role');
+            $query->whereHas('roles', function ($q) use ($roleName) {
+                $q->where('name', $roleName);
+            });
         }
 
         // Filter by Status
@@ -44,14 +47,21 @@ class UserController extends Controller
         $activeUsers = User::where('status', 'Active')->count();
         $inactiveUsers = User::where('status', 'Inactive')->count();
 
-        // Group by Role
-        $usersByRole = User::selectRaw('role, count(*) as count')
-            ->groupBy('role')
+        // Group by Role (Spatie way)
+        $usersByRole = \Illuminate\Support\Facades\DB::table('model_has_roles')
+            ->join('roles', 'model_has_roles.role_id', '=', 'roles.id')
+            ->where('model_has_roles.model_type', get_class(new User))
+            ->select('roles.name as role', \Illuminate\Support\Facades\DB::raw('count(*) as count'))
+            ->groupBy('roles.name')
             ->pluck('count', 'role')
             ->toArray();
 
         return Inertia::render('users/index', [
-            'users' => $users,
+            'users' => $users->through(function ($user) {
+                $userArray = $user->toArray();
+                $userArray['role'] = $user->roles->first()->name ?? 'No Role';
+                return $userArray;
+            }),
             'filters' => $request->only(['search', 'role', 'status']),
             'stats' => [
                 'total' => $totalUsers,
@@ -80,7 +90,6 @@ class UserController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => $validated['role'],
             'status' => $validated['status'],
             'duty_group' => $validated['duty_group'],
         ]);
@@ -110,7 +119,6 @@ class UserController extends Controller
 
         $user->name = $validated['name'];
         $user->email = $validated['email'];
-        $user->role = $validated['role'];
         $user->status = $validated['status'];
         $user->duty_group = $validated['duty_group'];
 

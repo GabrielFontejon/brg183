@@ -26,29 +26,18 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
 
-        Event::listen(\Illuminate\Auth\Events\Login::class, function ($event) {
-            \App\Services\AuditService::log('LOGIN', 'Auth', 'User logged in', null, $event->user->id);
-        });
+        // Event Listeners for Login and Failed are auto-discovered by Laravel 11 in app/Listeners
 
         Event::listen(\Illuminate\Auth\Events\Logout::class, function ($event) {
             if ($event->user) {
-                \App\Services\AuditService::log('LOGOUT', 'Auth', 'User logged out', null, $event->user->id);
+                \App\Services\AuditService::log('LOGOUT', 'Authentication', 'User logged out', null, $event->user->id);
             }
-        });
-
-        Event::listen(\Illuminate\Auth\Events\Failed::class, function ($event) {
-            \App\Services\AuditService::log(
-                'LOGIN_FAILED', 
-                'Auth', 
-                'Failed login attempt for email: ' . ($event->credentials['email'] ?? 'unknown'),
-                null
-            );
         });
 
         Event::listen(\Illuminate\Auth\Events\Lockout::class, function ($event) {
             \App\Services\AuditService::log(
                 'LOCKOUT', 
-                'Auth', 
+                'Authentication', 
                 'User locked out due to too many attempts. IP: ' . $event->request->ip(),
                 null
             );

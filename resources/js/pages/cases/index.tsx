@@ -83,7 +83,7 @@ interface Props {
 
 export default function CaseManagement({ cases, filters }: Props) {
     const { auth } = usePage<{ auth: { user: { role: string } } }>().props;
-    const isAdmin = auth?.user?.role === 'Admin';
+    const isAdmin = auth?.user?.role === 'Administrator';
 
     const breadcrumbs = [
         {

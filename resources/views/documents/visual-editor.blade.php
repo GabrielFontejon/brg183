@@ -252,7 +252,7 @@
         <!-- Action Buttons -->
         <div id="floating-actions" class="flex flex-col gap-3 transition-all duration-300 origin-bottom items-end">
             @if($readonly ?? false)
-                @if(auth()->user()->role !== 'Admin')
+                @if(auth()->user()->role !== 'Administrator')
                 {{-- Process / Status Updater Inline (Encoder only) --}}
                 <div class="bg-white p-4 rounded-xl shadow-lg border border-gray-200 w-64 mb-1 text-left">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Process / Status</label>

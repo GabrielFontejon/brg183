@@ -73,7 +73,7 @@ interface DashboardProps {
 
 export default function Dashboard({ stats, recentCases, statusDistribution, outcomeStats, typeStats, documentStats, monthlyStats }: DashboardProps) {
     const { auth } = usePage<SharedData>().props;
-    const canEdit = auth.user.role !== 'Admin';
+    const canEdit = auth.user.role !== 'Administrator';
 
     const [year, setYear] = useState(new Date().getFullYear());
     const breadcrumbs = [

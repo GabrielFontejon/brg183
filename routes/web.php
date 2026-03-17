@@ -11,8 +11,8 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Shared Routes (Admin and Encoder)
-    Route::middleware('role:Admin|Encoder')->group(function () {
+    // Shared Routes
+    Route::middleware('role:Administrator|Data Encoder')->group(function () {
         Route::get('dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
         // Views for Cases
@@ -37,7 +37,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Encoder Only Routes (Editing cases, documents, etc.)
-    Route::middleware('role:Encoder')->group(function () {
+    Route::middleware('role:Data Encoder')->group(function () {
         Route::post('cases', [App\Http\Controllers\CaseController::class, 'store'])->name('cases.store');
         Route::put('/cases/{id}', [App\Http\Controllers\CaseController::class, 'update'])->name('cases.update');
         Route::delete('/cases/{id}', [App\Http\Controllers\CaseController::class, 'destroy'])->name('cases.destroy');
@@ -57,11 +57,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('documents/generate', [App\Http\Controllers\DocumentController::class, 'generate'])->name('documents.generate');
         Route::post('documents/generate-word', [App\Http\Controllers\DocumentController::class, 'generateWord'])->name('documents.generate-word');
         Route::post('documents/upload', [App\Http\Controllers\DocumentController::class, 'upload'])->name('documents.upload');
-        Route::post('documents/create-form', [App\Http\Controllers\DocumentController::class, 'createForm'])->name('documents.create-form');
+        Route::post('documents/create-form', [App\Http\Controllers\DocumentController::class, 'storeForm'])->name('documents.create-form');
     });
 
     // Admin Only Routes (Users and Audit Trail)
-    Route::middleware('role:Admin')->group(function () {
+    Route::middleware('role:Administrator')->group(function () {
         Route::resource('users', App\Http\Controllers\UserController::class)->except(['create', 'show', 'edit']);
         Route::get('audit', [App\Http\Controllers\AuditController::class, 'index'])->name('audit.index');
 

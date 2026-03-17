@@ -237,7 +237,7 @@ export default function PersonnelPage({ users, filters, stats }: Props) {
     };
 
     const getRoleBadgeColor = (role: string) => {
-        if (role.includes('Admin') || role.includes('Head') || role.includes('Chairman')) return 'bg-[#1c2434] text-white';
+        if (role.includes('Administrator') || role.includes('Head') || role.includes('Chairman')) return 'bg-[#1c2434] text-white';
         if (role.includes('Secretary')) return 'bg-slate-700 text-white';
         if (role.includes('Pangkat')) return 'bg-blue-600 text-white';
         return 'bg-slate-100 text-slate-800';
@@ -245,7 +245,7 @@ export default function PersonnelPage({ users, filters, stats }: Props) {
 
     const rolesList = [
         "Data Encoder",
-        "Admin",
+        "Administrator",
     ];
 
     const dutyGroups = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
@@ -296,7 +296,7 @@ export default function PersonnelPage({ users, filters, stats }: Props) {
                         </p>
                     </div>
                     <div className="flex items-center space-x-2">
-                        {auth.user?.role === 'Admin' && (
+                        {auth.user?.role === 'Administrator' && (
                             <>
                                 <Button variant="outline" className="h-9" onClick={openPermissionsModal}>
                                     <Shield className="mr-2 h-4 w-4" />
@@ -683,7 +683,7 @@ export default function PersonnelPage({ users, filters, stats }: Props) {
                                                     id={`perm-${permission.id}`}
                                                     checked={isChecked}
                                                     onCheckedChange={() => togglePermission(permission.name)}
-                                                    disabled={selectedRole.name === 'Admin'} // Prevent disabling Admin's capabilities entirely from UI optionally, but we leave it enabled for flexibility
+                                                    disabled={selectedRole.name === 'Administrator'} // Prevent disabling Admin's capabilities entirely from UI optionally, but we leave it enabled for flexibility
                                                 />
                                                 <Label htmlFor={`perm-${permission.id}`} className="text-sm font-medium cursor-pointer">
                                                     {permission.name.replace(/_/g, ' ')}

@@ -54,13 +54,13 @@ class CaseController extends Controller
         }
 
         // Sort
-        $sortField = $request->input('sort_by', 'case_number');
-        $sortOrder = $request->input('sort_order', 'asc');
+        $sortField = $request->input('sort_by', 'created_at');
+        $sortOrder = $request->input('sort_order', 'desc');
         
         // Ensure valid sort field
-        $allowedFields = ['case_number', 'title', 'nature_of_case', 'complainant', 'respondent', 'status', 'date_filed'];
+        $allowedFields = ['case_number', 'title', 'nature_of_case', 'complainant', 'respondent', 'status', 'date_filed', 'created_at'];
         if (!in_array($sortField, $allowedFields)) {
-            $sortField = 'case_number';
+            $sortField = 'created_at';
         }
 
         $cases = $query->orderBy($sortField, $sortOrder)->paginate(10)->withQueryString();

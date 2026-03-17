@@ -209,6 +209,11 @@ export default function AuditTrailPage({ logs, stats, filters, users }: PageProp
                                     <SelectItem value="CREATE">Create</SelectItem>
                                     <SelectItem value="UPDATE">Update</SelectItem>
                                     <SelectItem value="DELETE">Delete</SelectItem>
+                                    <SelectItem value="PAGE_NOT_FOUND">Page Not Found</SelectItem>
+                                    <SelectItem value="DATABASE_ERROR">Database Error</SelectItem>
+                                    <SelectItem value="VALIDATION_FAILED">Validation Failed</SelectItem>
+                                    <SelectItem value="ACCESS_DENIED">Access Denied</SelectItem>
+                                    <SelectItem value="SYSTEM_ERROR">System Error</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -277,10 +282,26 @@ export default function AuditTrailPage({ logs, stats, filters, users }: PageProp
                                                 <TableCell>
                                                     <div className="flex items-center gap-2">
                                                         <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">
-                                                            {log.user?.name ? log.user.name.charAt(0).toUpperCase() : '?'}
+                                                            {(() => {
+                                                                if (log.user?.name) return log.user.name.charAt(0).toUpperCase();
+                                                                if (log.action === 'LOGIN_FAILED') return 'X';
+                                                                return '?';
+                                                            })()}
                                                         </div>
                                                         <div>
-                                                            <div className="font-medium text-sm">{log.user?.name || 'System / Unknown'}</div>
+                                                            <div className="font-medium text-sm">
+                                                                {(() => {
+                                                                    if (log.user?.name) return log.user.name;
+                                                                    if (log.action === 'LOGIN_FAILED') {
+                                                                        const match = log.details.match(/email:\s*([^\s]+)/);
+                                                                        return match ? match[1] : 'Unauthorized Attempt';
+                                                                    }
+                                                                    if (log.module === 'Website Navigation' || log.module === 'Form Submission') return 'Website Visitor';
+                                                                    if (log.module === 'System Kernel' || log.module === 'Database System') return 'System Process';
+                                                                    
+                                                                    return 'System / Unknown';
+                                                                })()}
+                                                            </div>
                                                             <div className="text-xs text-muted-foreground">{log.user?.role || ''}</div>
                                                         </div>
                                                     </div>
@@ -290,6 +311,7 @@ export default function AuditTrailPage({ logs, stats, filters, users }: PageProp
                                                         ${log.action === 'CREATE' ? 'bg-green-50 text-green-700 border-green-200' : ''}
                                                         ${log.action === 'UPDATE' ? 'bg-blue-50 text-blue-700 border-blue-200' : ''}
                                                         ${log.action === 'DELETE' ? 'bg-red-50 text-red-700 border-red-200' : ''}
+                                                        ${['PAGE_NOT_FOUND', 'DATABASE_ERROR', 'VALIDATION_FAILED', 'SYSTEM_ERROR', 'ACCESS_DENIED', 'ERROR'].includes(log.action) ? 'bg-orange-50 text-orange-700 border-orange-200' : ''}
                                                     `}>
                                                         {log.action}
                                                     </Badge>

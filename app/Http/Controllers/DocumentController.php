@@ -912,7 +912,7 @@ class DocumentController extends Controller
     }
 
     // ── Save a GForms-style custom answer sheet ───────────────────────────────
-    public function createForm(Request $request)
+    public function storeForm(Request $request)
     {
         $request->validate([
             'title' => 'required|string|max:255',
