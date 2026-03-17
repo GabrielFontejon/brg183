@@ -76,7 +76,7 @@ class UserController extends Controller
             'duty_group' => 'nullable|string',
         ]);
 
-        User::create([
+        $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
@@ -84,6 +84,8 @@ class UserController extends Controller
             'status' => $validated['status'],
             'duty_group' => $validated['duty_group'],
         ]);
+
+        $user->assignRole($validated['role']);
 
         AuditService::log('CREATE', 'Users', "Created new user: {$validated['name']} ({$validated['role']})", $validated['email']);
 
@@ -117,6 +119,8 @@ class UserController extends Controller
         }
 
         $user->save();
+
+        $user->syncRoles([$validated['role']]);
 
         AuditService::log('UPDATE', 'Users', "Updated user details: {$user->name}", $user->id);
 

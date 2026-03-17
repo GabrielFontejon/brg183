@@ -1037,7 +1037,7 @@
                 </svg>
                 Word Editor
             </button>
-            <button class="btn-header btn-header-outline" onclick="window.close()">
+            <button class="btn-header btn-header-outline" onclick="closeFormPage()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
@@ -1084,7 +1084,7 @@
     <form id="doc-form" action="{{ route('documents.generate') }}" method="POST" target="_blank">
         @csrf
         <input type="hidden" name="type" value="{{ $type }}">
-        <input type="hidden" name="action" value="download">
+        <input type="hidden" name="action" value="preview">
         <input type="hidden" name="layout_overrides" id="layout-overrides" value="">
         @if($case)
             <input type="hidden" name="case_id" value="{{ $case->id }}">
@@ -1400,6 +1400,14 @@
                 Clear All
             </button>
 
+            <!-- Save btn styled same as Generate -->
+            <button class="btn-submit" type="button" onclick="saveFormOnly()" id="saveBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                </svg>
+                Save Form
+            </button>
+
             <button class="btn-submit" type="button" onclick="submitFormNow()" id="submitBtn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M17 17h2a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2"/>
@@ -1504,6 +1512,64 @@
         setTimeout(() => {
             document.getElementById('loaderOverlay').classList.remove('active');
         }, 5000);
+    }
+
+    // ============================
+    // SAVE FORM ONLY
+    // ============================
+    function saveFormOnly() {
+        document.getElementById('layout-overrides').value = JSON.stringify(buildLayoutOverrides());
+        document.querySelector('input[name="action"]').value = 'save_only';
+
+        document.getElementById('loaderOverlay').classList.add('active');
+        document.querySelector('.loader-text').innerText = 'Saving...';
+
+        const form = document.getElementById('doc-form');
+        const formData = new FormData(form);
+
+        fetch(form.getAttribute('action'), {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('loaderOverlay').classList.remove('active');
+            document.querySelector('.loader-text').innerText = 'Generating PDF...'; // reset loader text
+            if(data.success) {
+                alert('Success! ' + data.message);
+                // Optionally return user to action
+                document.querySelector('input[name="action"]').value = 'preview'; // restore default
+            } else {
+                alert('Error: ' + data.message);
+                document.querySelector('input[name="action"]').value = 'preview'; // restore default
+            }
+        })
+        .catch(err => {
+            document.getElementById('loaderOverlay').classList.remove('active');
+            document.querySelector('.loader-text').innerText = 'Generating PDF...'; // reset loader text
+            document.querySelector('input[name="action"]').value = 'preview'; // restore default
+            console.error(err);
+            alert('Failed to save document. Please try again.');
+        });
+    }
+
+    // ============================
+    // GO BACK / CLOSE
+    // ============================
+    function closeFormPage() {
+        window.close(); 
+        
+        // Timer as fallback in case window.close() is blocked (same tab navigation)
+        setTimeout(() => {
+            if (window.history.length > 1 && document.referrer && !document.referrer.includes('login')) {
+                window.history.back();
+            } else {
+                window.location.href = '/cases'; 
+            }
+        }, 100);
     }
 
     // ============================

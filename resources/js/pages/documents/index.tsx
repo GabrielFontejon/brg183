@@ -38,9 +38,6 @@ const TEMPLATES = [
     { title: 'Complaint Form', description: 'KP Form No. 7 – Formal complaint filing', icon: FileText, type: 'complaint' },
     { title: 'Summons', description: 'KP Form No. 9 – Official notice to appear', icon: Bell, type: 'summons' },
     { title: 'Amicable Settlement', description: 'KP Form No. 16 – Agreement between parties', icon: Handshake, type: 'amicable_settlement' },
-    { title: 'Arbitration Award', description: 'KP Form No. 15 – Decision by Pangkat/Chairman', icon: Gavel, type: 'arbitration_award' },
-    { title: 'Repudiation', description: 'KP Form No. 17 – Rejection of settlement', icon: AlertTriangle, type: 'repudiation' },
-    { title: 'Affidavit of Desistance', description: 'Statement to desist from complaint', icon: FileMinus, type: 'affidavit_desistance' },
     { title: 'Affidavit of Withdrawal', description: 'Statement to withdraw complaint', icon: FileMinus, type: 'affidavit_withdrawal' },
     { title: 'Notice of Hearing (Conciliation)', description: 'Notice for Conciliation Proceedings', icon: Calendar, type: 'hearing_conciliation' },
     { title: 'Notice of Hearing (Mediation)', description: 'Notice for Mediation Proceedings', icon: Calendar, type: 'hearing_mediation' },
@@ -51,12 +48,8 @@ const TEMPLATES = [
     { title: 'Certificate to Bar Action', description: 'Barring future action', icon: Gavel, type: 'cert_bar_action' },
     { title: 'Certificate to Bar Counterclaim', description: 'Barring future counterclaim', icon: Gavel, type: 'cert_bar_counterclaim' },
     { title: 'Motion for Execution', description: 'Request for enforcement of settlement/award', icon: FileSignature, type: 'motion_execution' },
-    { title: 'Notice of Hearing (Execution)', description: 'Notice regarding execution of award', icon: Calendar, type: 'notice_execution' },
-    { title: 'Notice for Constitution of Pangkat', description: 'Official notice on Pangkat formation', icon: UserPlus, type: 'notice_constitution' },
-    { title: 'Notice to Chosen Pangkat Member', description: 'Notice to individual Pangkat members', icon: UserPlus, type: 'notice_chosen_member' },
     { title: 'Officers Return', description: 'Record of summons or notice service', icon: ClipboardCheck, type: 'officers_return' },
     { title: 'Letter of Demand', description: 'Formal demand for action or payment', icon: Send, type: 'letter_of_demand' },
-    { title: 'Katunayan ng Pagkakasundo', description: 'Official tagalog agreement certificate', icon: FileCheck, type: 'katunayan_pagkakasundo' },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────

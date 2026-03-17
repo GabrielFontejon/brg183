@@ -12,7 +12,7 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // Shared Routes (Admin and Encoder)
-    Route::middleware('role:Admin,Encoder')->group(function () {
+    Route::middleware('role:Admin|Encoder')->group(function () {
         Route::get('dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
         // Views for Cases
@@ -65,6 +65,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('role:Admin')->group(function () {
         Route::resource('users', App\Http\Controllers\UserController::class)->except(['create', 'show', 'edit']);
         Route::get('audit', [App\Http\Controllers\AuditController::class, 'index'])->name('audit.index');
+
+        // Role & Permission Management
+        Route::get('roles-permissions', [App\Http\Controllers\RolePermissionController::class, 'index'])->name('roles-permissions.index');
+        Route::post('roles-permissions/{role}', [App\Http\Controllers\RolePermissionController::class, 'update'])->name('roles-permissions.update');
     });
 });
 

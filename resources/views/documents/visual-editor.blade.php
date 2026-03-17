@@ -277,7 +277,7 @@
                     <span class="material-icons-outlined">print</span>
                     <span>Print Document</span>
                 </button>
-                <button type="button" onclick="if(document.referrer) { window.location.href = document.referrer; } else { window.history.back(); window.close(); window.location.href = '/cases'; }"
+                <button type="button" onclick="window.close(); setTimeout(() => { if (window.history.length > 1) { window.history.back(); } else { window.location.href = '/cases'; } }, 100);"
                     class="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-full shadow-lg font-medium flex items-center justify-center w-full gap-2 transition-transform hover:scale-105">
                     <span class="material-icons-outlined">close</span>
                     <span>Close</span>

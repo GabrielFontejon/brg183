@@ -35,6 +35,24 @@ class AppServiceProvider extends ServiceProvider
                 \App\Services\AuditService::log('LOGOUT', 'Auth', 'User logged out', null, $event->user->id);
             }
         });
+
+        Event::listen(\Illuminate\Auth\Events\Failed::class, function ($event) {
+            \App\Services\AuditService::log(
+                'LOGIN_FAILED', 
+                'Auth', 
+                'Failed login attempt for email: ' . ($event->credentials['email'] ?? 'unknown'),
+                null
+            );
+        });
+
+        Event::listen(\Illuminate\Auth\Events\Lockout::class, function ($event) {
+            \App\Services\AuditService::log(
+                'LOCKOUT', 
+                'Auth', 
+                'User locked out due to too many attempts. IP: ' . $event->request->ip(),
+                null
+            );
+        });
     }
 
     protected function configureDefaults(): void

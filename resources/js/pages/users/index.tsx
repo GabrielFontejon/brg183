@@ -1,5 +1,4 @@
-
-import { Head, useForm, router } from '@inertiajs/react';
+import { Head, useForm, router, usePage } from '@inertiajs/react';
 import {
     Users,
     UserCheck,
@@ -14,6 +13,7 @@ import {
     MoreHorizontal
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -44,6 +44,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import AppLayout from '@/layouts/app-layout';
 
 interface User {
@@ -89,6 +90,8 @@ export default function PersonnelPage({ users, filters, stats }: Props) {
             href: '/users',
         },
     ];
+
+    const { auth } = usePage<any>().props;
 
     // Filters state
     const [search, setSearch] = useState(filters.search || '');
@@ -138,6 +141,60 @@ export default function PersonnelPage({ users, filters, stats }: Props) {
         duty_group: '',
         password: '',
     });
+
+    const [isPermissionsOpen, setIsPermissionsOpen] = useState(false);
+    const [rolesListWithPerms, setRolesListWithPerms] = useState<any[]>([]);
+    const [allPermissionsList, setAllPermissionsList] = useState<any[]>([]);
+    const [selectedRole, setSelectedRole] = useState<any>(null);
+    const [isSavingPermissions, setIsSavingPermissions] = useState(false);
+
+    const openPermissionsModal = async () => {
+        setIsPermissionsOpen(true);
+        try {
+            const response = await axios.get('/roles-permissions');
+            setRolesListWithPerms(response.data.roles);
+            setAllPermissionsList(response.data.permissions);
+            if (response.data.roles.length > 0) {
+                setSelectedRole(response.data.roles[0]);
+            }
+        } catch (error) {
+            console.error("Error fetching roles and permissions", error);
+        }
+    };
+
+    const togglePermission = (permissionName: string) => {
+        if (!selectedRole) return;
+        const currentPermissions = selectedRole.permissions.map((p: any) => p.name);
+        const hasPermission = currentPermissions.includes(permissionName);
+        let newPermissions = [];
+        if (hasPermission) {
+            newPermissions = currentPermissions.filter((p: string) => p !== permissionName);
+        } else {
+            newPermissions = [...currentPermissions, permissionName];
+        }
+
+        setSelectedRole({
+            ...selectedRole,
+            permissions: newPermissions.map((name: string) => ({ name }))
+        });
+    };
+
+    const savePermissions = async () => {
+        if (!selectedRole) return;
+        setIsSavingPermissions(true);
+        try {
+            await axios.post(`/roles-permissions/${selectedRole.id}`, {
+                permissions: selectedRole.permissions.map((p: any) => p.name)
+            });
+            setRolesListWithPerms(rolesListWithPerms.map(r => r.id === selectedRole.id ? selectedRole : r));
+            setIsPermissionsOpen(false);
+            router.reload();
+        } catch (error) {
+            console.error("Error saving permissions", error);
+        } finally {
+            setIsSavingPermissions(false);
+        }
+    };
 
     const openEdit = (user: User) => {
         setSelectedUser(user);
@@ -239,6 +296,14 @@ export default function PersonnelPage({ users, filters, stats }: Props) {
                         </p>
                     </div>
                     <div className="flex items-center space-x-2">
+                        {auth.user?.role === 'Admin' && (
+                            <>
+                                <Button variant="outline" className="h-9" onClick={openPermissionsModal}>
+                                    <Shield className="mr-2 h-4 w-4" />
+                                    Manage Permissions
+                                </Button>
+                            </>
+                        )}
                         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                             <DialogTrigger asChild>
                                 <Button className="h-9 bg-[#1c2434] hover:bg-[#2c3a4f] text-white">
@@ -580,6 +645,62 @@ export default function PersonnelPage({ users, filters, stats }: Props) {
                                 <Button type="submit" disabled={editForm.processing}>Save Changes</Button>
                             </DialogFooter>
                         </form>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Permissions Dialog */}
+                <Dialog open={isPermissionsOpen} onOpenChange={setIsPermissionsOpen}>
+                    <DialogContent className="sm:max-w-[600px]">
+                        <DialogHeader>
+                            <DialogTitle>Manage Role Permissions</DialogTitle>
+                            <DialogDescription>
+                                Configure which features and actions each role can access.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        {/* Role selector */}
+                        <div className="flex space-x-2 my-2 border-b pb-4">
+                            {rolesListWithPerms.map((r) => (
+                                <Button
+                                    key={r.id}
+                                    variant={selectedRole?.id === r.id ? "default" : "outline"}
+                                    onClick={() => setSelectedRole(r)}
+                                >
+                                    {r.name}
+                                </Button>
+                            ))}
+                        </div>
+
+                        {selectedRole && (
+                            <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+                                <h4 className="text-sm font-medium mb-2 text-slate-500 uppercase">Permissions for {selectedRole.name}</h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    {allPermissionsList.map((permission) => {
+                                        const isChecked = selectedRole.permissions.some((p: any) => p.name === permission.name);
+                                        return (
+                                            <div key={permission.id} className="flex items-center space-x-2">
+                                                <Checkbox
+                                                    id={`perm-${permission.id}`}
+                                                    checked={isChecked}
+                                                    onCheckedChange={() => togglePermission(permission.name)}
+                                                    disabled={selectedRole.name === 'Admin'} // Prevent disabling Admin's capabilities entirely from UI optionally, but we leave it enabled for flexibility
+                                                />
+                                                <Label htmlFor={`perm-${permission.id}`} className="text-sm font-medium cursor-pointer">
+                                                    {permission.name.replace(/_/g, ' ')}
+                                                </Label>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsPermissionsOpen(false)}>Cancel</Button>
+                            <Button onClick={savePermissions} disabled={isSavingPermissions}>
+                                {isSavingPermissions ? "Saving..." : "Save Permissions"}
+                            </Button>
+                        </DialogFooter>
                     </DialogContent>
                 </Dialog>
             </div>

@@ -22,9 +22,31 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
         $middleware->alias([
-            'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->reportable(function (\Throwable $e) {
+            try {
+                \App\Services\AuditService::log(
+                    'ERROR',
+                    'System',
+                    'Exception: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine(),
+                    null
+                );
+            } catch (\Exception $auditError) {
+                // Fail silently if audit logging itself fails during an exception
+            }
+        });
+
+        // Handle "Too Many Requests" 429 errors gracefully
+        $exceptions->render(function (\Illuminate\Http\Exceptions\ThrottleRequestsException $e, \Illuminate\Http\Request $request) {
+            if ($request->isMethod('POST')) {
+                return back()->withErrors([
+                    'email' => 'Too many login attempts. Please try again in ' . $e->getHeaders()['Retry-After'] . ' seconds.',
+                ]);
+            }
+        });
     })->create();

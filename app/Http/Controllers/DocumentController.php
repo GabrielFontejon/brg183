@@ -59,8 +59,7 @@ class DocumentController extends Controller
                                 + ($allDocs['summons_respondent'] ?? 0)
                                 + ($allDocs['summons_witness'] ?? 0),
                 'amicable_settlement' => ($allDocs['amicable_settlement'] ?? 0)
-                                + ($allDocs['arbitration_agreement'] ?? 0)
-                                + ($allDocs['arbitration_award'] ?? 0),
+                                + ($allDocs['arbitration_agreement'] ?? 0),
                 'certificates' => ($allDocs['cert_file_action'] ?? 0)
                                 + ($allDocs['cert_file_action_court'] ?? 0)
                                 + ($allDocs['cert_bar_action'] ?? 0)
@@ -70,15 +69,10 @@ class DocumentController extends Controller
                                 + ($allDocs['hearing_conciliation'] ?? 0)
                                 + ($allDocs['hearing_mediation'] ?? 0)
                                 + ($allDocs['hearing_failure_appear'] ?? 0)
-                                + ($allDocs['hearing_failure_appear_counterclaim'] ?? 0)
-                                + ($allDocs['notice_execution'] ?? 0)
-                                + ($allDocs['notice_constitution'] ?? 0)
-                                + ($allDocs['notice_chosen_member'] ?? 0),
+                                + ($allDocs['hearing_failure_appear_counterclaim'] ?? 0),
                 'others' => ($allDocs['minutes_of_hearing'] ?? 0)
                                 + ($allDocs['letter_of_demand'] ?? 0)
                                 + ($allDocs['subpoena'] ?? 0)
-                                + ($allDocs['repudiation'] ?? 0)
-                                + ($allDocs['affidavit_desistance'] ?? 0)
                                 + ($allDocs['affidavit_withdrawal'] ?? 0)
                                 + ($allDocs['motion_execution'] ?? 0)
                                 + ($allDocs['officers_return'] ?? 0)
@@ -379,6 +373,94 @@ class DocumentController extends Controller
         }
         $data['fields'] = $fields;
 
+        if ($request->input('action') === 'save_only') {
+            try {
+                $caseId = $request->input('case_id') ?: null;
+                $skipKeys = ['fields', 'imageBase64', 'action', 'layout_overrides', '_token'];
+                $contentToSave = array_diff_key($data, array_flip($skipKeys));
+
+                // Dynamically create a case if one doesn't exist
+                if (!$caseId) {
+                    $caseNo = $contentToSave['case_no'] ?? ('CAS-' . date('YmdHis'));
+                    
+                    // Check if case already exists by number (even if soft-deleted)
+                    $existingCase = \App\Models\LuponCase::withTrashed()->where('case_number', $caseNo)->first();
+                    
+                    if ($existingCase) {
+                        $caseId = $existingCase->id;
+                    } else {
+                        $complainant = $contentToSave['complainant'] ?? 'Unknown Complainant';
+                        $respondent = $contentToSave['respondent'] ?? 'Unknown Respondent';
+                        
+                        $case = \App\Models\LuponCase::create([
+                            'case_number' => $caseNo,
+                            'title' => $complainant . ' vs ' . $respondent,
+                            'complainant' => $complainant,
+                            'respondent' => $respondent,
+                            'nature_of_case' => $contentToSave['For'] ?? ucwords(str_replace(['_', '-'], ' ', $type)),
+                            'status' => 'Pending',
+                            'date_filed' => now(),
+                            'complaint_narrative' => $contentToSave['narrative'] ?? '',
+                            'admin_notes' => 'Auto-generated from Document',
+                            'document_data' => $contentToSave,
+                            'created_by' => auth()->id(),
+                        ]);
+                        $caseId = $case->id;
+                        AuditService::log('CREATE', 'Cases', "Auto-created Case #{$case->case_number} from {$type}", $caseNo);
+                    }
+                }
+
+                \App\Models\Document::create([
+                    'case_id' => $caseId,
+                    'type' => $type,
+                    'content' => $contentToSave,
+                    'status' => 'Issued',
+                    'issued_at' => now(),
+                    'created_by' => auth()->id(),
+                ]);
+
+                AuditService::log('CREATE', 'Documents', "Saved {$type} for Case #{$caseId}", $caseId);
+
+                // Sync Parties and Data back to parent Case if we have one
+                $case = \App\Models\LuponCase::withTrashed()->find($caseId);
+                if ($case) {
+                    $updated = false;
+                    
+                    // Always restore if it was archived
+                    if ($case->trashed()) {
+                        $case->restore();
+                        $updated = true;
+                    }
+
+                    if (! empty($data['complainant'])) {
+                        $case->complainant = $data['complainant'];
+                        $updated = true;
+                    }
+                    if (! empty($data['respondent'])) {
+                        $case->respondent = $data['respondent'];
+                        $updated = true;
+                    }
+                    
+                    // Sync the full document data to the case for global functions
+                    $case->document_data = $contentToSave;
+                    $updated = true;
+
+                    if ($updated) {
+                        $comp = $case->complainant ?? 'Unknown';
+                        $resp = $case->respondent ?? 'Unknown';
+                        $case->title = "$comp vs $resp";
+                        $case->save();
+                    }
+                }
+
+                return response()->json(['success' => true, 'message' => 'Document saved successfully!']);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Failed to save document record: '.$e->getMessage());
+                return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+            }
+        }
+
+
         if (! file_exists($pdfPath)) {
             $pdfPath = public_path('forms/complaint.pdf');
         }
@@ -458,6 +540,37 @@ class DocumentController extends Controller
             $skipKeys = ['fields', 'imageBase64', 'action', 'layout_overrides', '_token'];
             $contentToSave = array_diff_key($data, array_flip($skipKeys));
 
+            // Dynamically create a case if one doesn't exist
+            if (!$caseId) {
+                $caseNo = $contentToSave['case_no'] ?? ('CAS-' . date('YmdHis'));
+                
+                // Check if case already exists by number (even if soft-deleted)
+                $existingCase = \App\Models\LuponCase::withTrashed()->where('case_number', $caseNo)->first();
+                
+                if ($existingCase) {
+                    $caseId = $existingCase->id;
+                } else {
+                    $complainant = $contentToSave['complainant'] ?? 'Unknown Complainant';
+                    $respondent = $contentToSave['respondent'] ?? 'Unknown Respondent';
+                    
+                    $case = \App\Models\LuponCase::create([
+                        'case_number' => $caseNo,
+                        'title' => $complainant . ' vs ' . $respondent,
+                        'complainant' => $complainant,
+                        'respondent' => $respondent,
+                        'nature_of_case' => $contentToSave['For'] ?? ucwords(str_replace(['_', '-'], ' ', $type)),
+                        'status' => 'Pending',
+                        'date_filed' => now(),
+                        'complaint_narrative' => $contentToSave['narrative'] ?? '',
+                        'admin_notes' => 'Auto-generated from Document',
+                        'document_data' => $contentToSave,
+                        'created_by' => auth()->id(),
+                    ]);
+                    $caseId = $case->id;
+                    AuditService::log('CREATE', 'Cases', "Auto-created Case #{$case->case_number} from {$type}", $caseNo);
+                }
+            }
+
             \App\Models\Document::create([
                 'case_id' => $caseId,
                 'type' => $type,
@@ -467,16 +580,21 @@ class DocumentController extends Controller
                 'created_by' => auth()->id(),
             ]);
 
-            $auditDetail = $caseId
-                ? "Generated {$type} for Case #{$caseId}"
-                : "Generated standalone {$type}";
+            $auditDetail = "Generated {$type} for Case #{$caseId}";
             AuditService::log('CREATE', 'Documents', $auditDetail, $caseId);
 
-            // Sync Parties back to parent Case if we have one
+            // Sync Parties and Data back to parent Case if we have one
             if ($caseId) {
-                $case = \App\Models\LuponCase::find($caseId);
+                $case = \App\Models\LuponCase::withTrashed()->find($caseId);
                 if ($case) {
                     $updated = false;
+
+                    // Always restore if it was archived
+                    if ($case->trashed()) {
+                        $case->restore();
+                        $updated = true;
+                    }
+
                     if (! empty($data['complainant'])) {
                         $case->complainant = $data['complainant'];
                         $updated = true;
@@ -485,6 +603,11 @@ class DocumentController extends Controller
                         $case->respondent = $data['respondent'];
                         $updated = true;
                     }
+
+                    // Sync the full document data to the case for global functions
+                    $case->document_data = $contentToSave;
+                    $updated = true;
+
                     if ($updated) {
                         $comp = $case->complainant ?? 'Unknown';
                         $resp = $case->respondent ?? 'Unknown';
@@ -700,14 +823,55 @@ class DocumentController extends Controller
 
         // Record the document in the DB
         try {
+            $caseId = $request->input('case_id') ?: null;
+
+            if (!$caseId) {
+                // Try to infer case details from document
+                $caseNo = $fieldValues['case_no'] ?? ('CAS-' . date('YmdHis'));
+                
+                // Check if case already exists by number
+                $existingCase = \App\Models\LuponCase::where('case_number', $caseNo)->first();
+                
+                if ($existingCase) {
+                    $caseId = $existingCase->id;
+                } else {
+                    $complainant = $fieldValues['complainant'] ?? 'Unknown Complainant';
+                    $respondent = $fieldValues['respondent'] ?? 'Unknown Respondent';
+                    
+                    $case = \App\Models\LuponCase::create([
+                        'case_number' => $caseNo,
+                        'title' => $complainant . ' vs ' . $respondent,
+                        'complainant' => $complainant,
+                        'respondent' => $respondent,
+                        'nature_of_case' => $fieldValues['For'] ?? ucwords(str_replace(['_', '-'], ' ', $type)),
+                        'status' => 'Pending',
+                        'date_filed' => now(),
+                        'complaint_narrative' => $fieldValues['narrative'] ?? '',
+                        'admin_notes' => 'Auto-generated from Word Document',
+                        'document_data' => $fieldValues,
+                        'created_by' => auth()->id(),
+                    ]);
+                    $caseId = $case->id;
+                    \App\Services\AuditService::log('CREATE', 'Cases', "Auto-created Case #{$case->case_number} from Word Document", $caseNo);
+                }
+            }
+
             \App\Models\Document::create([
-                'case_id' => $request->input('case_id') ?: null,
+                'case_id' => $caseId,
                 'type' => $type,
                 'content' => $fieldValues,
                 'status' => 'Issued',
                 'issued_at' => now(),
                 'created_by' => auth()->id(),
             ]);
+
+            // Sync Case Data
+            $case = \App\Models\LuponCase::withTrashed()->find($caseId);
+            if ($case) {
+                if ($case->trashed()) $case->restore();
+                $case->document_data = $fieldValues;
+                $case->save();
+            }
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Word doc DB save failed: '.$e->getMessage());
         }
