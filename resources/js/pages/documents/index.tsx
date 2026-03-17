@@ -33,28 +33,27 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/app-layout';
 
-// ─── Template definitions (All 22 Templates) ──────────────────────────────────
+// ─── Template definitions (Updated categorization) ──────────────────────────────
 const TEMPLATES = [
-    { title: 'Complaint Form', description: 'KP Form No. 7 – Formal complaint filing', icon: FileText, type: 'complaint' },
-    { title: 'Summons', description: 'KP Form No. 9 – Official notice to appear', icon: Bell, type: 'summons' },
-    { title: 'Amicable Settlement', description: 'KP Form No. 16 – Agreement between parties', icon: Handshake, type: 'amicable_settlement' },
-    { title: 'Affidavit of Withdrawal', description: 'Statement to withdraw complaint', icon: FileMinus, type: 'affidavit_withdrawal' },
-    { title: 'Notice of Hearing (Conciliation)', description: 'Notice for Conciliation Proceedings', icon: Calendar, type: 'hearing_conciliation' },
-    { title: 'Notice of Hearing (Mediation)', description: 'Notice for Mediation Proceedings', icon: Calendar, type: 'hearing_mediation' },
-    { title: 'Notice of Hearing (Fail. to Appear)', description: 'Failure to appear at hearing', icon: Calendar, type: 'hearing_failure_appear' },
-    { title: 'Notice of Hearing (Counterclaim)', description: 'Failure to appear – Counterclaim', icon: Calendar, type: 'hearing_failure_appear_counterclaim' },
-    { title: 'Certificate to File Action', description: 'Authorization to file action', icon: Scale, type: 'cert_file_action' },
-    { title: 'Certificate to File Action (Court)', description: 'Authorization for court filing', icon: Scale, type: 'cert_file_action_court' },
-    { title: 'Certificate to Bar Action', description: 'Barring future action', icon: Gavel, type: 'cert_bar_action' },
-    { title: 'Certificate to Bar Counterclaim', description: 'Barring future counterclaim', icon: Gavel, type: 'cert_bar_counterclaim' },
-    { title: 'Motion for Execution', description: 'Request for enforcement of settlement/award', icon: FileSignature, type: 'motion_execution' },
-    { title: 'Officers Return', description: 'Record of summons or notice service', icon: ClipboardCheck, type: 'officers_return' },
-    { title: 'Letter of Demand', description: 'Formal demand for action or payment', icon: Send, type: 'letter_of_demand' },
+    { title: 'Complaint Form', description: 'KP Form No. 7 – Formal complaint filing', icon: FileText, type: 'complaint', isEditable: false },
+    { title: 'Summons', description: 'KP Form No. 9 – Official notice to appear', icon: Bell, type: 'summons', isEditable: true },
+    { title: 'Amicable Settlement', description: 'KP Form No. 16 – Agreement between parties', icon: Handshake, type: 'amicable_settlement', isEditable: true },
+    { title: 'Affidavit of Withdrawal', description: 'Statement to withdraw complaint', icon: FileMinus, type: 'affidavit_withdrawal', isEditable: false },
+    { title: 'Notice of Hearing (Conciliation)', description: 'Notice for Conciliation Proceedings', icon: Calendar, type: 'hearing_conciliation', isEditable: true },
+    { title: 'Notice of Hearing (Mediation)', description: 'Notice for Mediation Proceedings', icon: Calendar, type: 'hearing_mediation', isEditable: true },
+    { title: 'Notice of Hearing (Fail. to Appear)', description: 'Failure to appear at hearing', icon: Calendar, type: 'hearing_failure_appear', isEditable: true },
+    { title: 'Notice of Hearing (Counterclaim)', description: 'Failure to appear – Counterclaim', icon: Calendar, type: 'hearing_failure_appear_counterclaim', isEditable: true },
+    { title: 'Certificate to File Action (Court)', description: 'Authorization for court filing', icon: Scale, type: 'cert_file_action_court', isEditable: true },
+    { title: 'Certificate to Bar Action', description: 'Barring future action', icon: Gavel, type: 'cert_bar_action', isEditable: true },
+    { title: 'Certificate to Bar Counterclaim', description: 'Barring future counterclaim', icon: Gavel, type: 'cert_bar_counterclaim', isEditable: true },
+    { title: 'Motion for Execution', description: 'Request for enforcement of settlement/award', icon: FileSignature, type: 'motion_execution', isEditable: true },
+    { title: 'Officers Return', description: 'Record of summons or notice service', icon: ClipboardCheck, type: 'officers_return', isEditable: true },
+    { title: 'Letter of Demand', description: 'Formal demand for action or payment', icon: Send, type: 'letter_of_demand', isEditable: true },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 const getTemplateTitle = (type: string) => {
-    if (type === 'uploaded') return 'Uploaded Document';
+    if (type === 'uploaded' || type === 'upload') return 'Uploaded Document';
     if (type === 'custom_form' || type === 'custom') return 'Custom Form';
     const template = TEMPLATES.find(t => t.type === type);
     return template ? template.title : type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
@@ -70,21 +69,28 @@ interface Document {
     creator: { name: string } | null;
 }
 
-interface CustomTemplate {
+interface Template {
     id: number;
     title: string;
     description: string;
     type: string;
-    icon_name?: string;
+    icon: any;
+    isCustom: boolean;
+    isEditable?: boolean;
+    file_path?: string;
+    content?: any;
 }
 
 interface DocumentsProps {
     documents: Document[];
     stats: {
-        total: number; complaints: number; summons: number;
-        settlements: number; certificates: number; notices: number; others: number;
+        total: number;
+        summons: number;
+        settlements: number;
+        recent: number;
     };
-    customTemplates: CustomTemplate[];
+    customTemplates: any[];
+
     hiddenTemplates: string[];
 }
 
@@ -186,10 +192,10 @@ export default function Documents({ documents, stats, customTemplates, hiddenTem
                 {/* ── Stats ── */}
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                     {[
-                        { label: 'Total Documents', value: stats.total, sub: 'All generated forms', icon: <FileText className="h-4 w-4 text-muted-foreground" /> },
+                        { label: 'Total Documents', value: stats.total, sub: 'Total generated forms', icon: <FileText className="h-4 w-4 text-muted-foreground" /> },
                         { label: 'Summons Issued', value: stats.summons, sub: 'Official summons generated', icon: <Bell className="h-4 w-4 text-muted-foreground" /> },
                         { label: 'Settlements', value: stats.settlements, sub: 'Agreements & awards', icon: <FileCheck className="h-4 w-4 text-muted-foreground" /> },
-                        { label: 'Certificates', value: stats.certificates, sub: 'Certificates to file/bar action', icon: <BadgeCheck className="h-4 w-4 text-muted-foreground" /> },
+                        { label: 'Recent Documents', value: stats.recent, sub: 'Latest system activity', icon: <History className="h-4 w-4 text-muted-foreground" /> },
                     ].map(s => (
                         <Card key={s.label}>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -232,10 +238,9 @@ export default function Documents({ documents, stats, customTemplates, hiddenTem
                             </div>
                         ) : (
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                {filteredTemplates.map((template, idx) => {
+                                {filteredTemplates.map((template: Template, idx) => {
                                     const fillHref = template.isCustom ? `/documents/fill-custom/${template.id}` : `/documents/create/${template.type}`;
                                     const editHref = template.isCustom ? `/documents/edit-template/${template.id}` : `/documents/edit-standard/${template.type}`;
-
                                     return (
                                         <div
                                             key={template.isCustom ? `custom-${template.id}` : template.type}
@@ -245,8 +250,15 @@ export default function Documents({ documents, stats, customTemplates, hiddenTem
                                                     const natureFilter = template.isCustom ? template.title : template.description;
                                                     router.visit(`/cases?nature=${encodeURIComponent(natureFilter)}`);
                                                 } else {
-                                                    // Encoder role: open fill-out form in new tab
-                                                    window.open(fillHref, '_blank');
+                                                    // Encoder role: open fill-out form (or view if non-editable) in new tab
+                                                    if (template.isEditable === false || (template.isCustom && (template as any).content?.is_view_only)) {
+                                                        const pdfUrl = template.isCustom 
+                                                            ? `/storage/${(template as any).file_path}`
+                                                            : `/forms/${template.type}.pdf`;
+                                                        window.open(pdfUrl, '_blank');
+                                                    } else {
+                                                        window.open(fillHref, '_blank');
+                                                    }
                                                 }
                                             }}
                                             className="flex items-start space-x-4 p-4 rounded-lg border bg-card hover:border-[#dd8b11]/30 hover:bg-[#dd8b11]/5 dark:hover:bg-[#dd8b11]/10 transition-all group cursor-pointer relative shadow-sm hover:shadow-md"
@@ -255,29 +267,44 @@ export default function Documents({ documents, stats, customTemplates, hiddenTem
                                                 <template.icon className="h-4 w-4 text-white dark:text-black stroke-[2]" />
                                             </div>
                                             <div className="flex-1 space-y-1 pr-6">
-                                                <p className="text-sm font-semibold leading-none group-hover:text-[#dd8b11] transition-colors">{template.title}</p>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-sm font-semibold leading-none group-hover:text-[#dd8b11] transition-colors">{template.title}</p>
+                                                    {(template.isEditable === false || (template.isCustom && (template as any).content?.is_view_only)) && (
+                                                        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-muted text-muted-foreground whitespace-nowrap">View Only</span>
+                                                    )}
+                                                </div>
                                                 <p className="text-xs text-muted-foreground line-clamp-2">{template.description}</p>
                                             </div>
 
                                             {canEdit && (
                                                 <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                                                    <a
-                                                        href={fillHref}
-                                                        target="_blank"
-                                                        onClick={(e) => e.stopPropagation()}
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (template.isEditable === false || (template.isCustom && (template as any).content?.is_view_only)) {
+                                                                const pdfUrl = template.isCustom 
+                                                                    ? `/storage/${(template as any).file_path}`
+                                                                    : `/forms/${template.type}.pdf`;
+                                                                window.open(pdfUrl, '_blank');
+                                                            } else {
+                                                                window.open(fillHref, '_blank');
+                                                            }
+                                                        }}
                                                         className="inline-flex items-center justify-center rounded bg-[#dd8b11] text-white px-2.5 py-1 text-[10px] font-semibold tracking-wide hover:bg-[#c47c0f] transition-colors uppercase mr-1"
-                                                        title="Fill Out Form"
+                                                        title={template.isEditable === false || (template.isCustom && (template as any).content?.is_view_only) ? "View Template" : "Fill Out Form"}
                                                     >
-                                                        Fill Out
-                                                    </a>
-                                                    <a
-                                                        href={editHref}
-                                                        onClick={e => e.stopPropagation()}
-                                                        className="inline-flex items-center justify-center rounded-full h-7 w-7 text-muted-foreground hover:bg-muted hover:text-primary transition-colors"
-                                                        title="Word Editor"
-                                                    >
-                                                        <Edit className="h-3.5 w-3.5" />
-                                                    </a>
+                                                        {template.isEditable === false || (template.isCustom && (template as any).content?.is_view_only) ? "View" : "Fill Out"}
+                                                    </button>
+                                                    {!(template.isEditable === false || (template.isCustom && (template as any).content?.is_view_only)) && (
+                                                        <a
+                                                            href={editHref}
+                                                            onClick={e => e.stopPropagation()}
+                                                            className="inline-flex items-center justify-center rounded-full h-7 w-7 text-muted-foreground hover:bg-muted hover:text-primary transition-colors"
+                                                            title="Word Editor"
+                                                        >
+                                                            <Edit className="h-3.5 w-3.5" />
+                                                        </a>
+                                                    )}
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
@@ -330,7 +357,7 @@ export default function Documents({ documents, stats, customTemplates, hiddenTem
                                 </optgroup>
                                 <optgroup label="Other">
                                     <option value="custom_form">Custom Form</option>
-                                    <option value="uploaded">Uploaded</option>
+                                    <option value="upload">Uploaded</option>
                                 </optgroup>
                             </select>
                             {docFilter !== 'all' && (

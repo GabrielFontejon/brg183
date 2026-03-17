@@ -13,12 +13,12 @@ class DashboardController extends Controller
     {
         try {
             // 1. Key Metrics
-            $totalCases = LuponCase::count();
-            $pendingCases = LuponCase::where('status', 'Pending')->count();
-            $resolvedCases = LuponCase::whereIn('status', ['Resolved', 'Settled'])->count();
+            $totalCases = LuponCase::withTrashed()->count();
+            $pendingCases = LuponCase::withTrashed()->where('status', 'Pending')->count();
+            $resolvedCases = LuponCase::withTrashed()->whereIn('status', ['Resolved', 'Settled'])->count();
 
             // Calculate new cases this month
-            $newCasesThisMonth = LuponCase::whereMonth('date_filed', Carbon::now()->month)
+            $newCasesThisMonth = LuponCase::withTrashed()->whereMonth('date_filed', Carbon::now()->month)
                 ->whereYear('date_filed', Carbon::now()->year)
                 ->count();
 
@@ -37,20 +37,35 @@ class DashboardController extends Controller
                     ];
                 });
 
-            // 3. Status Distribution (Pie Chart)
+            // 3. Status Distribution (Comprehensive list)
+            $pendingCount = LuponCase::withTrashed()->where('status', 'Pending')->count();
+            $resolvedCount = LuponCase::withTrashed()->whereIn('status', ['Resolved', 'Settled'])->count();
+            $mediationCount = LuponCase::withTrashed()->where('status', 'Mediation')->count();
+            $dismissedCount = LuponCase::withTrashed()->where('status', 'Dismissed')->count();
+            $certifiedCount = LuponCase::withTrashed()->where('status', 'Certified')->count();
+
             $statusDistribution = [
-                'settled' => LuponCase::whereIn('status', ['Resolved', 'Settled'])->count(),
-                'pending' => $pendingCases, // Already calculated
-                'dismissed' => LuponCase::where('status', 'Dismissed')->count(),
-                'other' => LuponCase::whereNotIn('status', ['Resolved', 'Settled', 'Pending', 'Dismissed'])->count(),
+                'pending' => $pendingCount,
+                'resolved' => $resolvedCount,
+                'mediation' => $mediationCount,
+                'dismissed' => $dismissedCount,
+                'certified' => $certifiedCount,
             ];
 
-            // Calculate percentages for the pie chart display
-            $totalForPie = array_sum($statusDistribution);
-            $statusPercentages = [
-                'settled' => $totalForPie > 0 ? round(($statusDistribution['settled'] / $totalForPie) * 100) : 0,
-                'pending' => $totalForPie > 0 ? round(($statusDistribution['pending'] / $totalForPie) * 100) : 0,
-                'unresolved' => $totalForPie > 0 ? round((($statusDistribution['dismissed'] + $statusDistribution['other']) / $totalForPie) * 100) : 0,
+            // 3b. Outcome Distribution (Specifically for the requested 3-category Pie Chart)
+            // Settled = Resolved/Settled
+            // Pending = Pending + Mediation (Still active in the Lupon)
+            // Unresolved = Dismissed + Certified (Did not reach an agreement)
+            $settled = $resolvedCount;
+            $pendingActive = $pendingCount + $mediationCount;
+            $unresolved = $dismissedCount + $certifiedCount;
+            
+            $totalForOutcome = $settled + $pendingActive + $unresolved;
+
+            $outcomeStats = [
+                ['name' => 'Settled', 'value' => $settled, 'percentage' => $totalForOutcome > 0 ? round(($settled / $totalForOutcome) * 100) : 0],
+                ['name' => 'Pending', 'value' => $pendingActive, 'percentage' => $totalForOutcome > 0 ? round(($pendingActive / $totalForOutcome) * 100) : 0],
+                ['name' => 'Unresolved', 'value' => $unresolved, 'percentage' => $totalForOutcome > 0 ? round(($unresolved / $totalForOutcome) * 100) : 0],
             ];
 
             // 4. Case Type Distribution (Donut Chart)
@@ -79,7 +94,7 @@ class DashboardController extends Controller
                 // Ignore if date_filed parsing fails on empty/bad data
             }
 
-            // Ensure all months are represented (optional, but good for charts)
+            // Ensure all months are represented
             $allMonths = [];
             for ($i = 1; $i <= 12; $i++) {
                 $monthName = Carbon::create()->month($i)->format('M');
@@ -105,7 +120,7 @@ class DashboardController extends Controller
                 ->map(function ($doc) {
                     return [
                         'id' => $doc->id,
-                        'type' => $doc->type, // e.g., 'complaint', 'summons'
+                        'type' => $doc->type, 
                         'case_number' => $doc->case ? $doc->case->case_number : 'N/A',
                         'created_at' => $doc->created_at->format('M d, Y'),
                         'status' => $doc->status,
@@ -121,7 +136,7 @@ class DashboardController extends Controller
                 ],
                 'recentCases' => $recentCases,
                 'statusDistribution' => $statusDistribution,
-                'statusPercentages' => $statusPercentages,
+                'outcomeStats' => $outcomeStats,
                 'typeStats' => $typeStats,
                 'monthlyStats' => $allMonths,
                 'documentStats' => [

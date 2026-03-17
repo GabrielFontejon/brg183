@@ -3,7 +3,8 @@ import {
     Upload, FileText, Plus, Trash2, GripVertical,
     Type, AlignLeft, CheckSquare, FileCheck, AlertCircle, Sparkles, RotateCcw,
     ChevronUp, ChevronDown, ArrowUpDown, CalendarDays,
-    FileSignature, ClipboardList, Briefcase, ShieldAlert, BadgeInfo, Scale
+    FileSignature, ClipboardList, Briefcase, ShieldAlert, BadgeInfo, Scale,
+    Edit, Eye
 } from 'lucide-react';
 import * as pdfjs from 'pdfjs-dist';
 import { useRef, useState } from 'react';
@@ -31,6 +32,7 @@ interface DocumentData {
     fields: FormField[];
     file_path: string | null;
     icon_name?: string;
+    is_view_only?: boolean;
 }
 
 const AVAILABLE_ICONS = [
@@ -70,12 +72,14 @@ export default function NewDocument({ existingTemplate }: { existingTemplate?: D
         description: string;
         fields: string;
         icon_name: string;
+        is_view_only: boolean;
     }>({
         pdf: null,
         title: existingTemplate?.title || '',
         description: existingTemplate?.description || '',
         fields: JSON.stringify(existingTemplate?.fields || []),
         icon_name: existingTemplate?.icon_name || 'FileSignature',
+        is_view_only: existingTemplate?.is_view_only || false,
     });
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -312,6 +316,38 @@ export default function NewDocument({ existingTemplate }: { existingTemplate?: D
                                         className="w-full text-sm rounded-lg border-slate-200 focus:ring-primary/20 focus:border-primary transition-all"
                                     />
                                 </div>
+                                <div className="space-y-2 pt-2 border-t">
+                                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-3 block">Template Mode</label>
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setData('is_view_only', false)}
+                                            className={`flex-1 flex flex-col items-center gap-2 p-3 rounded-xl border transition-all ${!data.is_view_only ? 'border-primary bg-primary/5 text-primary ring-2 ring-primary/20' : 'border-border bg-background grow hover:bg-muted/50'}`}
+                                        >
+                                            <Edit className="h-5 w-5" />
+                                            <div className="text-center">
+                                                <p className="text-xs font-bold">Editable</p>
+                                                <p className="text-[9px] opacity-70">Electronic form filling</p>
+                                            </div>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setData('is_view_only', true)}
+                                            className={`flex-1 flex flex-col items-center gap-2 p-3 rounded-xl border transition-all ${data.is_view_only ? 'border-primary bg-primary/5 text-primary ring-2 ring-primary/20' : 'border-border bg-background grow hover:bg-muted/50'}`}
+                                        >
+                                            <Eye className="h-5 w-5" />
+                                            <div className="text-center">
+                                                <p className="text-xs font-bold">View Only</p>
+                                                <p className="text-[9px] opacity-70">Static PDF download</p>
+                                            </div>
+                                        </button>
+                                    </div>
+                                    <p className="text-[9px] text-muted-foreground mt-2 italic">
+                                        {data.is_view_only 
+                                          ? "View Only mode hides the question builder. Users will only be able to view/download the original PDF template." 
+                                          : "Editable mode allows you to define questions that users will fill out digitally on top of the PDF."}
+                                    </p>
+                                </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Template Icon</label>
                                     <div className="flex flex-wrap gap-2">
@@ -422,26 +458,27 @@ export default function NewDocument({ existingTemplate }: { existingTemplate?: D
                         </Card>
                     </div>
 
-                    {/* ── Right Column: Builder ── */}
-                    <div className="lg:col-span-7 space-y-4">
-                        <Card className="shadow-sm border-t-4 border-t-primary border-border">
-                            <CardHeader className="pb-3 border-b bg-muted/40">
-                                <div className="flex items-center justify-between">
-                                    <CardTitle className="text-base font-bold flex items-center gap-2 text-foreground">
-                                        <FileText className="h-4 w-4 text-primary" />
-                                        Build Answer Sheet
-                                    </CardTitle>
-                                    <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-slate-100 text-slate-500 border border-slate-200 uppercase tracking-tight">
-                                        {fields.length} Answer Fields
-                                    </span>
-                                </div>
-                                <div className="mt-3 p-3 bg-muted/30 rounded-lg border border-border/50">
-                                    <p className="text-[11px] leading-relaxed text-muted-foreground font-medium">
-                                        <strong>Instructions:</strong> Fill in all required fields below. Your answers will be printed directly onto the official form. Fields marked with <span className="text-red-500 font-bold">*</span> are required.
-                                    </p>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="pt-6 space-y-6">
+                        {/* ── Right Column: Builder ── */}
+                        <div className="lg:col-span-7 space-y-4">
+                            {!data.is_view_only ? (
+                                <Card className="shadow-sm border-t-4 border-t-primary border-border">
+                                    <CardHeader className="pb-3 border-b bg-muted/40">
+                                        <div className="flex items-center justify-between">
+                                            <CardTitle className="text-base font-bold flex items-center gap-2 text-foreground">
+                                                <FileText className="h-4 w-4 text-primary" />
+                                                Build Answer Sheet
+                                            </CardTitle>
+                                            <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-slate-100 text-slate-500 border border-slate-200 uppercase tracking-tight">
+                                                {fields.length} Answer Fields
+                                            </span>
+                                        </div>
+                                        <div className="mt-3 p-3 bg-muted/30 rounded-lg border border-border/50">
+                                            <p className="text-[11px] leading-relaxed text-muted-foreground font-medium">
+                                                <strong>Instructions:</strong> Fill in all required fields below. Your answers will be printed directly onto the official form. Fields marked with <span className="text-red-500 font-bold">*</span> are required.
+                                            </p>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="pt-6 space-y-6">
 
                                 {/* Quick-Add */}
                                 <div className="space-y-4">
@@ -662,8 +699,26 @@ export default function NewDocument({ existingTemplate }: { existingTemplate?: D
                                     ))}
                                 </div>
 
-                            </CardContent>
-                        </Card>
+                                </CardContent>
+                            </Card>
+                        ) : (
+                                <Card className="shadow-sm border-t-4 border-t-slate-400 border-border h-[400px] flex flex-col items-center justify-center p-12 text-center bg-muted/10">
+                                    <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center mb-6">
+                                        <Eye className="h-10 w-10 text-muted-foreground" />
+                                    </div>
+                                    <h3 className="text-base font-bold text-foreground">View Only Mode Active</h3>
+                                    <p className="text-sm text-muted-foreground mt-2 max-w-sm">
+                                        This document is set to "View Only". No answer fields need to be built.
+                                        Users will simply be able to view or download the PDF template you've provided.
+                                    </p>
+                                    {!data.pdf && !existingTemplate?.file_path && (
+                                        <div className="mt-6 p-4 rounded-lg bg-red-50 border border-red-100 flex items-center gap-3 text-red-700 text-xs text-left">
+                                            <AlertCircle className="h-5 w-5 flex-shrink-0" />
+                                            <p className="font-semibold">Please upload a background PDF to ensure users have something to view.</p>
+                                        </div>
+                                    )}
+                                </Card>
+                        )}
 
                         {/* Bottom Bar */}
                         <div className="flex items-center justify-end gap-3 pt-8 pb-10 border-t border-border mt-8">

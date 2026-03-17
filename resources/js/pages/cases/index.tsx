@@ -12,6 +12,9 @@ import {
     Search,
     MoreHorizontal,
     RefreshCcw,
+    ChevronUp,
+    ChevronDown,
+    ArrowUpDown,
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -73,6 +76,8 @@ interface Props {
         status: string;
         nature: string;
         date?: string;
+        sort_by?: string;
+        sort_order?: string;
     };
 }
 
@@ -91,17 +96,19 @@ export default function CaseManagement({ cases, filters }: Props) {
     const [status, setStatus] = useState(filters.status || 'all');
     const [nature, setNature] = useState(filters.nature || 'all');
     const [date, setDate] = useState(filters.date || '');
+    const [sortField, setSortField] = useState(filters.sort_by || 'case_number');
+    const [sortOrder, setSortOrder] = useState(filters.sort_order || 'asc');
 
     // Debounced search
     const updateSearch = useCallback(
         debounce((value: string) => {
             router.get(
                 '/cases',
-                { search: value, status, nature, date },
+                { search: value, status, nature, date, sort_by: sortField, sort_order: sortOrder },
                 { preserveState: true, replace: true }
             );
         }, 300),
-        [status, nature, date]
+        [status, nature, date, sortField, sortOrder]
     );
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -121,6 +128,27 @@ export default function CaseManagement({ cases, filters }: Props) {
                 status: key === 'status' ? value : status,
                 nature: key === 'nature' ? value : nature,
                 date: key === 'date' ? value : date,
+                sort_by: sortField,
+                sort_order: sortOrder,
+            },
+            { preserveState: true, replace: true }
+        );
+    };
+
+    const toggleSort = (field: string) => {
+        const newOrder = sortField === field && sortOrder === 'asc' ? 'desc' : 'asc';
+        setSortField(field);
+        setSortOrder(newOrder);
+
+        router.get(
+            '/cases',
+            {
+                search,
+                status,
+                nature,
+                date,
+                sort_by: field,
+                sort_order: newOrder,
             },
             { preserveState: true, replace: true }
         );
@@ -303,7 +331,20 @@ export default function CaseManagement({ cases, filters }: Props) {
                         <table className="w-full text-sm text-left">
                             <thead className="text-xs text-muted-foreground uppercase border-b bg-slate-50/50 dark:bg-slate-900/50">
                                 <tr>
-                                    <th className="py-3 px-4 font-medium">Case Number</th>
+                                    <th className="py-3 px-4 font-medium w-12 text-center">No.</th>
+                                    <th 
+                                        className="py-3 px-4 font-medium cursor-pointer hover:text-foreground"
+                                        onClick={() => toggleSort('case_number')}
+                                    >
+                                        <div className="flex items-center gap-1">
+                                            Case Number
+                                            {sortField === 'case_number' ? (
+                                                sortOrder === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />
+                                            ) : (
+                                                <ArrowUpDown className="h-3 w-3 opacity-30" />
+                                            )}
+                                        </div>
+                                    </th>
                                     <th className="py-3 px-4 font-medium">Case Type</th>
                                     <th className="py-3 px-4 font-medium">Complainant</th>
                                     <th className="py-3 px-4 font-medium">Respondent</th>
@@ -320,10 +361,19 @@ export default function CaseManagement({ cases, filters }: Props) {
                                         </td>
                                     </tr>
                                 ) : (
-                                    cases.data.map((item) => (
-                                        <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50">
-                                            <td className="py-3 px-4 font-medium text-[#1c2434] dark:text-white">{item.case_number}</td>
-                                            <td className="py-3 px-4 text-muted-foreground">{item.nature_of_case}</td>
+                                    cases.data.map((item, index) => (
+                                        <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50 border-b">
+                                            <td className="py-3 px-4 text-center text-muted-foreground font-medium">
+                                                {cases.from + index}
+                                            </td>
+                                            <td className="py-3 px-4 font-medium text-[#1c2434] dark:text-white">
+                                                <div className="flex items-center gap-2">
+                                                    {item.case_number}
+                                                </div>
+                                            </td>
+                                            <td className="py-3 px-4 text-muted-foreground truncate max-w-[200px]" title={item.nature_of_case}>
+                                                {item.nature_of_case}
+                                            </td>
                                             <td className="py-3 px-4 text-muted-foreground">{item.complainant}</td>
                                             <td className="py-3 px-4 text-muted-foreground">{item.respondent}</td>
                                             <td className="py-3 px-4 text-muted-foreground">
@@ -336,7 +386,7 @@ export default function CaseManagement({ cases, filters }: Props) {
                                             </td>
                                             <td>
                                                 <div className="flex items-center gap-2">
-                                                    <Button variant="ghost" size="icon" title="View Details" onClick={() => router.visit(`/documents/view-case/${item.id}`)}>
+                                                    <Button variant="ghost" size="icon" title="View Details" onClick={() => window.open(`/documents/view-case/${item.id}`, '_blank')}>
                                                         <Eye className="h-4 w-4" />
                                                     </Button>
                                                     {!isAdmin && (
@@ -383,7 +433,7 @@ export default function CaseManagement({ cases, filters }: Props) {
                                     size="sm"
                                     className={`h-8 min-w-[32px] px-2 ${link.active ? 'bg-[#1c2434] text-white' : ''}`}
                                     disabled={!link.url}
-                                    onClick={() => link.url && router.visit(link.url, { data: { search, status, nature, date }, preserveState: true })}
+                                    onClick={() => link.url && router.visit(link.url, { data: { search, status, nature, date, sort_by: sortField, sort_order: sortOrder }, preserveState: true })}
                                     dangerouslySetInnerHTML={{ __html: link.label }}
                                 />
                             ))}

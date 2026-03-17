@@ -35,7 +35,7 @@ class DocumentController extends Controller
                 $query->where('type', $request->type);
             }
 
-            $documents = $query->latest()->get()->map(function ($doc) {
+            $documents = $query->latest()->limit(15)->get()->map(function ($doc) {
                 return [
                     'id' => $doc->id,
                     'type' => $doc->type,
@@ -53,30 +53,23 @@ class DocumentController extends Controller
                 ->pluck('count', 'type')
                 ->toArray();
 
+            // Fetch hidden templates
+            $hiddenTemplates = \App\Models\FormLayout::where('is_hidden', true)
+                ->pluck('document_type')
+                ->toArray();
+
+            $customCount = \App\Models\Document::where('type', 'custom_form')->count();
+            $standardCount = 14; // Matches TEMPLATES array in index.tsx
+            
             $stats = [
-                'total' => array_sum($allDocs),
-                'summons' => ($allDocs['summons'] ?? 0)
-                                + ($allDocs['summons_respondent'] ?? 0)
-                                + ($allDocs['summons_witness'] ?? 0),
-                'amicable_settlement' => ($allDocs['amicable_settlement'] ?? 0)
-                                + ($allDocs['arbitration_agreement'] ?? 0),
-                'certificates' => ($allDocs['cert_file_action'] ?? 0)
-                                + ($allDocs['cert_file_action_court'] ?? 0)
-                                + ($allDocs['cert_bar_action'] ?? 0)
-                                + ($allDocs['cert_bar_counterclaim'] ?? 0),
-                'notices' => ($allDocs['notice_of_hearing'] ?? 0)
-                                + ($allDocs['notice_to_appear'] ?? 0)
-                                + ($allDocs['hearing_conciliation'] ?? 0)
-                                + ($allDocs['hearing_mediation'] ?? 0)
-                                + ($allDocs['hearing_failure_appear'] ?? 0)
-                                + ($allDocs['hearing_failure_appear_counterclaim'] ?? 0),
-                'others' => ($allDocs['minutes_of_hearing'] ?? 0)
-                                + ($allDocs['letter_of_demand'] ?? 0)
-                                + ($allDocs['subpoena'] ?? 0)
-                                + ($allDocs['affidavit_withdrawal'] ?? 0)
-                                + ($allDocs['motion_execution'] ?? 0)
-                                + ($allDocs['officers_return'] ?? 0)
-                                + ($allDocs['custom_form'] ?? 0),
+                'total' => ($standardCount - count($hiddenTemplates)) + $customCount,
+                'summons' => \App\Models\Document::whereNotNull('case_id')
+                    ->whereIn('type', ['summons', 'summons_respondent', 'summons_witness', 'notice_to_appear'])
+                    ->count(),
+                'settlements' => \App\Models\Document::whereNotNull('case_id')
+                    ->whereIn('type', ['amicable_settlement', 'arbitration_agreement', 'arbitration_award', 'katunayan_pagkakasundo'])
+                    ->count(),
+                'recent' => \App\Models\Document::whereNotNull('case_id')->count(),
             ];
 
             // Fetch custom-built forms to show in the "Templates" grid
@@ -90,6 +83,9 @@ class DocumentController extends Controller
                         'description' => $doc->content['description'] ?? 'Custom uploaded document',
                         'type' => 'custom_template',
                         'icon_name' => $doc->content['icon_name'] ?? 'FileSignature',
+                        'is_view_only' => $doc->content['is_view_only'] ?? false,
+                        'file_path' => $doc->file_path,
+                        'content' => $doc->content,
                     ];
                 });
 
@@ -1014,6 +1010,7 @@ class DocumentController extends Controller
                 'description' => $request->input('description'),
                 'fields' => $fields,
                 'icon_name' => $request->input('icon_name', 'FileSignature'),
+                'is_view_only' => $request->boolean('is_view_only'),
             ],
         ]);
 
@@ -1052,6 +1049,7 @@ class DocumentController extends Controller
 
         // Pre-fill metadata based on type
         $title = ucwords(str_replace(['_', '-'], ' ', $type));
+        $isViewOnly = in_array($type, ['complaint', 'affidavit_withdrawal']);
 
         return \Inertia\Inertia::render('documents/new', [
             'existingTemplate' => [
@@ -1061,6 +1059,7 @@ class DocumentController extends Controller
                 'fields' => $fields,
                 'file_path' => null,
                 'icon_name' => 'FileSignature',
+                'is_view_only' => $isViewOnly,
             ],
         ]);
     }
@@ -1081,6 +1080,7 @@ class DocumentController extends Controller
                 'fields' => $document->content['fields'] ?? [],
                 'file_path' => $document->file_path,
                 'icon_name' => $document->content['icon_name'] ?? 'FileSignature',
+                'is_view_only' => $document->content['is_view_only'] ?? false,
             ],
         ]);
     }
@@ -1108,6 +1108,7 @@ class DocumentController extends Controller
         $data['description'] = $request->input('description');
         $data['fields'] = $fields;
         $data['icon_name'] = $request->input('icon_name', 'FileSignature');
+        $data['is_view_only'] = $request->boolean('is_view_only');
 
         $updatePayload = [
             'content' => $data,

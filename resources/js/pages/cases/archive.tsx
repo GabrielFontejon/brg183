@@ -222,7 +222,7 @@ export default function ArchiveManagement({ cases, filters }: Props) {
                                             </td>
                                             <td>
                                                 <div className="flex items-center gap-2 justify-end">
-                                                    <Button variant="ghost" size="icon" title="View Details" onClick={() => router.visit(`/documents/view-case/${item.id}`)}>
+                                                    <Button variant="ghost" size="icon" title="View Details" onClick={() => window.open(`/documents/view-case/${item.id}`, '_blank')}>
                                                         <Eye className="h-4 w-4" />
                                                     </Button>
                                                     <Button variant="ghost" size="icon" title="Restore Case" onClick={() => restoreCase(item)} className="text-green-500 hover:text-green-700">

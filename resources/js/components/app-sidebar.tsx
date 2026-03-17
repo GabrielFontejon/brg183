@@ -31,11 +31,7 @@ import AppLogo from './app-logo';
 import { SharedData } from '@/types';
 
 const mainNavItems: NavItem[] = [
-    {
-        title: 'LTIA',
-        href: '/ltia',
-        icon: Trophy,
-    },
+
     {
         title: 'Dashboard',
         href: '/dashboard',
@@ -73,10 +69,12 @@ export function AppSidebar() {
     const { state, toggleSidebar } = useSidebar();
     const isCollapsed = state === 'collapsed';
     const { auth } = usePage<SharedData>().props;
-    const userRole = auth.user.role;
+    const userRoles = auth.roles || [];
+    const isEncoder = userRoles.includes('Encoder') || userRoles.includes('Data Encoder');
 
     const filteredNavItems = mainNavItems.filter((item) => {
-        if (userRole === 'Encoder') {
+        if (isEncoder) {
+            // Data Encoders should not see Audit Trail or Users
             return !['Audit Trail', 'Users'].includes(item.title);
         }
         return true;

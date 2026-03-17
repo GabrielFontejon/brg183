@@ -24,50 +24,20 @@ export default function Login({
     canResetPassword,
     canRegister,
 }: Props) {
-    const [role, setRole] = useState('Admin');
     const [showPassword, setShowPassword] = useState(false);
 
     return (
         <AuthLayout
-            title={`Log in as ${role}`}
+            title="Sign In"
             description="Enter your email and password below to log in"
         >
-            <Head title={`Log in - ${role}`} />
+            <Head title="Log in" />
 
-            {/* Role Selection Tabs */}
-            <div className="flex bg-muted p-1 rounded-xl mb-6 shadow-inner">
-                <button
-                    type="button"
-                    onClick={() => setRole('Admin')}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${role === 'Admin'
-                        ? 'bg-white dark:bg-slate-800 text-[#dd8b11] shadow-sm ring-1 ring-black/5'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-white/50 dark:hover:bg-slate-800/50'
-                        }`}
-                >
-                    <ShieldAlert className="h-4 w-4" />
-                    Administrator
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setRole('Encoder')}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 ${role === 'Encoder'
-                        ? 'bg-white dark:bg-slate-800 text-[#dd8b11] shadow-sm ring-1 ring-black/5'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-white/50 dark:hover:bg-slate-800/50'
-                        }`}
-                >
-                    <Database className="h-4 w-4" />
-                    Data Encoder
-                </button>
-            </div>
-
-            {/* Example Credentials */}
-            <div className="bg-blue-50 dark:bg-slate-800/50 p-3 rounded-lg border border-blue-100 dark:border-slate-800 text-sm mb-6 flex items-start gap-2 text-blue-800 dark:text-blue-300">
+            <div className="bg-blue-50 dark:bg-slate-800/50 p-4 rounded-lg border border-blue-100 dark:border-slate-800 text-sm mb-6 flex items-start gap-2 text-blue-800 dark:text-blue-300">
                 <ShieldAlert className="h-4 w-4 mt-0.5 shrink-0" />
                 <div>
-                    <span className="font-semibold block mb-0.5">Example Credentials ({role})</span>
-                    Email: <span className="font-mono bg-white/50 dark:bg-black/50 px-1 rounded">{role === 'Admin' ? 'admin@gmail.com' : 'encoder@gmail.com'}</span>
-                    <br />
-                    Password: <span className="font-mono bg-white/50 dark:bg-black/50 px-1 rounded">12345</span>
+                    <span className="font-semibold block mb-0.5">Secure Access</span>
+                    Please use your assigned barangay credentials to enter the system.
                 </div>
             </div>
 
@@ -78,14 +48,6 @@ export default function Login({
             >
                 {({ processing, errors }) => (
                     <>
-                        <input type="hidden" name="role" value={role} />
-
-                        {(errors as any).role && (
-                            <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm border border-red-200 shadow-sm flex items-start gap-2">
-                                <ShieldAlert className="h-4 w-4 mt-0.5" />
-                                <span>{(errors as any).role}</span>
-                            </div>
-                        )}
 
                         <div className="grid gap-6">
                             <div className="grid gap-2">

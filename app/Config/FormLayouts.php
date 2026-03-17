@@ -84,7 +84,7 @@ class FormLayouts
                 ['name' => 'respondent',  'label' => 'Respondent / Addressee', 'placeholder' => 'Full legal name of the respondent',            'x' => '10%', 'y' => '28%', 'w' => '50%', 'h' => 'auto'],
                 ['name' => 'case_no',     'label' => 'Case Number', 'placeholder' => 'e.g. 2024-001',              'x' => '75%', 'y' => '22.5%', 'w' => '15%', 'h' => 'auto', 'class' => 'text-right'],
                 ['name' => 'body_text',   'label' => 'Withdrawal Statement',  'x' => '10%', 'y' => '38%', 'w' => '80%', 'h' => '30%', 'type' => 'textarea',
-                    'default' => 'I, the undersigned, do hereby voluntarily withdraw the complaint filed against the respondent.'],
+                    'default' => ''],
                 ['name' => 'notary',      'label' => 'Subscribed and Sworn Before', 'x' => '10%', 'y' => '72%', 'w' => '40%', 'h' => 'auto'],
                 ...$footerFields,
             ],

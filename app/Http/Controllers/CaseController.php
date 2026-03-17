@@ -53,11 +53,21 @@ class CaseController extends Controller
             }
         }
 
-        $cases = $query->orderBy('date_filed', 'desc')->paginate(10)->withQueryString();
+        // Sort
+        $sortField = $request->input('sort_by', 'case_number');
+        $sortOrder = $request->input('sort_order', 'asc');
+        
+        // Ensure valid sort field
+        $allowedFields = ['case_number', 'title', 'nature_of_case', 'complainant', 'respondent', 'status', 'date_filed'];
+        if (!in_array($sortField, $allowedFields)) {
+            $sortField = 'case_number';
+        }
+
+        $cases = $query->orderBy($sortField, $sortOrder)->paginate(10)->withQueryString();
 
         return \Inertia\Inertia::render('cases/index', [
             'cases' => $cases,
-            'filters' => $request->only(['search', 'status', 'nature', 'date']),
+            'filters' => $request->only(['search', 'status', 'nature', 'date', 'sort_by', 'sort_order']),
         ]);
     }
 
@@ -249,5 +259,21 @@ class CaseController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Error archiving cases.');
         }
+    }
+    public function lookup(Request $request)
+    {
+        $search = $request->input('search');
+
+        if (empty($search)) {
+            return response()->json([]);
+        }
+
+        $cases = LuponCase::withTrashed()
+            ->where('case_number', 'like', "%{$search}%")
+            ->orWhere('title', 'like', "%{$search}%")
+            ->take(5)
+            ->get(['id', 'case_number', 'title', 'status', 'nature_of_case']);
+
+        return response()->json($cases);
     }
 }

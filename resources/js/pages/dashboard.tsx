@@ -9,7 +9,8 @@ import {
     FileText,
     Printer,
     PieChart as PieChartIcon,
-    Search
+    Search,
+    Trophy
 } from 'lucide-react';
 import { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
@@ -40,16 +41,17 @@ interface DashboardProps {
         date_filed: string;
         status: string;
     }>;
+    outcomeStats: Array<{
+        name: string;
+        value: number;
+        percentage: number;
+    }>;
     statusDistribution: {
-        settled: number;
         pending: number;
+        resolved: number;
+        mediation: number;
         dismissed: number;
-        other: number;
-    };
-    statusPercentages: {
-        settled: number;
-        pending: number;
-        unresolved: number;
+        certified: number;
     };
     typeStats: Array<{
         nature_of_case: string;
@@ -69,7 +71,7 @@ interface DashboardProps {
     monthlyStats: Array<{ name: string; total: number }>;
 }
 
-export default function Dashboard({ stats, recentCases, statusDistribution, statusPercentages, typeStats, documentStats, monthlyStats }: DashboardProps) {
+export default function Dashboard({ stats, recentCases, statusDistribution, outcomeStats, typeStats, documentStats, monthlyStats }: DashboardProps) {
     const { auth } = usePage<SharedData>().props;
     const canEdit = auth.user.role !== 'Admin';
 
@@ -81,7 +83,7 @@ export default function Dashboard({ stats, recentCases, statusDistribution, stat
         }
     ];
 
-    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+    const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#a855f7']; 
 
     const getStatusVariant = (status: string) => {
         switch (status?.toLowerCase()) {
@@ -212,7 +214,7 @@ export default function Dashboard({ stats, recentCases, statusDistribution, stat
                                         ) : (
                                             recentCases.map((item) => (
                                                 <tr key={item.id} className="hover:bg-secondary/50/50 dark:hover:bg-secondary/80/50 cursor-pointer"
-                                                    onClick={() => router.visit(`/documents/view/${item.id}`)}>
+                                                    onClick={() => window.open(`/documents/view-case/${item.id}`, '_blank')}>
                                                     <td className="py-3 px-2 font-medium">{item.case_number}</td>
                                                     <td className="py-3 px-2 text-muted-foreground">{item.type}</td>
                                                     <td className="py-3 px-2 text-muted-foreground">{item.complainant}</td>
@@ -237,33 +239,39 @@ export default function Dashboard({ stats, recentCases, statusDistribution, stat
                             <CardTitle>Case Outcomes</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="flex flex-col items-center justify-center min-h-[200px]">
-                                <div className="rounded-full border-8 border-[rgba(221,139,17,0.1)] h-32 w-32 flex items-center justify-center mb-6 dark:border-[rgba(221,139,17,0.2)] relative">
-                                    <PieChartIcon className="h-8 w-8 text-[#dd8b11]" />
-                                </div>
-                                <div className="w-full space-y-3">
-                                    <div className="flex items-center justify-between text-sm">
+                            <div className="h-[250px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={outcomeStats}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={60}
+                                            outerRadius={80}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                        >
+                                            {outcomeStats.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip 
+                                            formatter={(value, name, props) => [`${value} cases (${props.payload.percentage}%)`, name]}
+                                        />
+                                        <Legend verticalAlign="bottom" height={36} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="mt-4 space-y-2">
+                                {outcomeStats.map((stat, index) => (
+                                    <div key={index} className="flex items-center justify-between text-sm">
                                         <div className="flex items-center gap-2">
-                                            <span className="w-2 h-2 rounded-full bg-[#dd8b11]"></span>
-                                            <span className="text-muted-foreground">Settled ({statusDistribution.settled})</span>
+                                            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
+                                            <span className="text-muted-foreground font-medium">{stat.name} ({stat.value})</span>
                                         </div>
-                                        <span className="font-medium">{statusPercentages.settled}%</span>
+                                        <span className="font-bold" style={{ color: COLORS[index % COLORS.length] }}>{stat.percentage}%</span>
                                     </div>
-                                    <div className="flex items-center justify-between text-sm">
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-2 h-2 rounded-full bg-secondary/500"></span>
-                                            <span className="text-muted-foreground">Pending ({statusDistribution.pending})</span>
-                                        </div>
-                                        <span className="font-medium">{statusPercentages.pending}%</span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-sm">
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-2 h-2 rounded-full bg-muted-foreground"></span>
-                                            <span className="text-muted-foreground">Unresolved ({statusDistribution.dismissed + statusDistribution.other})</span>
-                                        </div>
-                                        <span className="font-medium">{statusPercentages.unresolved}%</span>
-                                    </div>
-                                </div>
+                                ))}
                             </div>
                         </CardContent>
                     </Card>
@@ -344,10 +352,11 @@ export default function Dashboard({ stats, recentCases, statusDistribution, stat
                                     <PieChart>
                                         <Pie
                                             data={[
-                                                { name: 'Settled', value: statusDistribution.settled },
+                                                { name: 'Resolved', value: statusDistribution.resolved },
                                                 { name: 'Pending', value: statusDistribution.pending },
+                                                { name: 'Mediation', value: statusDistribution.mediation },
                                                 { name: 'Dismissed', value: statusDistribution.dismissed },
-                                                { name: 'Other', value: statusDistribution.other },
+                                                { name: 'Certified', value: statusDistribution.certified },
                                             ]}
                                             cx="50%"
                                             cy="50%"
@@ -356,7 +365,7 @@ export default function Dashboard({ stats, recentCases, statusDistribution, stat
                                             paddingAngle={5}
                                             dataKey="value"
                                         >
-                                            {[0, 1, 2, 3].map((entry, index) => (
+                                            {[0, 1, 2, 3, 4].map((entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                             ))}
                                         </Pie>
@@ -416,7 +425,10 @@ export default function Dashboard({ stats, recentCases, statusDistribution, stat
                                     <p className="text-sm text-center text-muted-foreground py-4">No documents generated yet.</p>
                                 ) : (
                                     documentStats.recent.map((doc) => (
-                                        <div key={doc.id} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
+                                        <div key={doc.id} 
+                                            className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0 cursor-pointer hover:bg-secondary/50 p-1 rounded-sm transition-colors"
+                                            onClick={() => window.open(`/documents/view/${doc.id}`, '_blank')}
+                                        >
                                             <div>
                                                 <p className="text-sm font-medium">{doc.type}</p>
                                                 <p className="text-xs text-muted-foreground">Case: {doc.case_number}</p>
@@ -436,37 +448,50 @@ export default function Dashboard({ stats, recentCases, statusDistribution, stat
                 </div>
 
                 {/* Quick Actions */}
-                {canEdit && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Quick Actions</CardTitle>
-                        </CardHeader>
-                        <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            <Button variant="outline" asChild className="h-auto py-4 justify-start space-x-4 hover:border-[#dd8b11] hover:bg-secondary/50 dark:hover:bg-secondary/80 group">
-                                <Link href="/documents">
-                                    <div className="p-2 bg-transparent rounded-lg transition-colors border border-transparent">
-                                        <Plus className="h-5 w-5 text-black dark:text-white stroke-[2]" />
-                                    </div>
-                                    <div className="text-left">
-                                        <div className="font-semibold text-[#dd8b11] dark:text-white">New Case</div>
-                                        <div className="text-xs text-muted-foreground font-normal">File a new case</div>
-                                    </div>
-                                </Link>
-                            </Button>
-                            <Button variant="outline" asChild className="h-auto py-4 justify-start space-x-4 hover:border-[#dd8b11] hover:bg-secondary/50 dark:hover:bg-secondary/80 group">
-                                <Link href="/system-reports">
-                                    <div className="p-2 bg-transparent rounded-lg transition-colors border border-transparent">
-                                        <FileText className="h-5 w-5 text-black dark:text-white stroke-[2]" />
-                                    </div>
-                                    <div className="text-left">
-                                        <div className="font-semibold text-[#dd8b11] dark:text-white">Generate Report</div>
-                                        <div className="text-xs text-muted-foreground font-normal">Create summary</div>
-                                    </div>
-                                </Link>
-                            </Button>
-                        </CardContent>
-                    </Card>
-                )}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Quick Actions</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {canEdit && (
+                            <>
+                                <Button variant="outline" asChild className="h-auto py-4 justify-start space-x-4 hover:border-[#dd8b11] hover:bg-secondary/50 dark:hover:bg-secondary/80 group">
+                                    <Link href="/documents">
+                                        <div className="p-2 bg-transparent rounded-lg transition-colors border border-transparent">
+                                            <Plus className="h-5 w-5 text-black dark:text-white stroke-[2]" />
+                                        </div>
+                                        <div className="text-left">
+                                            <div className="font-semibold text-[#dd8b11] dark:text-white">New Case</div>
+                                            <div className="text-xs text-muted-foreground font-normal">File a new case</div>
+                                        </div>
+                                    </Link>
+                                </Button>
+                                <Button variant="outline" asChild className="h-auto py-4 justify-start space-x-4 hover:border-[#dd8b11] hover:bg-secondary/50 dark:hover:bg-secondary/80 group">
+                                    <Link href="/system-reports">
+                                        <div className="p-2 bg-transparent rounded-lg transition-colors border border-transparent">
+                                            <FileText className="h-5 w-5 text-black dark:text-white stroke-[2]" />
+                                        </div>
+                                        <div className="text-left">
+                                            <div className="font-semibold text-[#dd8b11] dark:text-white">Generate Report</div>
+                                            <div className="text-xs text-muted-foreground font-normal">Create summary</div>
+                                        </div>
+                                    </Link>
+                                </Button>
+                            </>
+                        )}
+                        <Button variant="outline" asChild className="h-auto py-4 justify-start space-x-4 hover:border-[#dd8b11] hover:bg-secondary/50 dark:hover:bg-secondary/80 group">
+                            <Link href="/ltia">
+                                <div className="p-2 bg-transparent rounded-lg transition-colors border border-transparent">
+                                    <Trophy className="h-5 w-5 text-black dark:text-white stroke-[2]" />
+                                </div>
+                                <div className="text-left">
+                                    <div className="font-semibold text-[#dd8b11] dark:text-white">LTIA</div>
+                                    <div className="text-xs text-muted-foreground font-normal">View achievements</div>
+                                </div>
+                            </Link>
+                        </Button>
+                    </CardContent>
+                </Card>
 
             </div>
         </AppLayout>

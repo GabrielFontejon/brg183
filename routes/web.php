@@ -25,16 +25,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('documents/view-case/{id}', [App\Http\Controllers\DocumentController::class, 'viewCase'])->name('documents.view');
 
         // Other Shared Views
-        Route::get('analytics', function () {
-            return Inertia::render('analytics/index');
-        })->name('analytics.index');
+        Route::get('analytics', [App\Http\Controllers\AnalyticsController::class, 'index'])->name('analytics.index');
 
         Route::get('system-reports', [App\Http\Controllers\ReportController::class, 'index'])->name('reports.index');
         Route::get('reports/generate', [App\Http\Controllers\ReportController::class, 'generate'])->name('reports.generate');
 
-        Route::get('ltia', function () {
-            return Inertia::render('ltia/index');
-        })->name('ltia.index');
+        Route::get('ltia', [App\Http\Controllers\LTIAController::class, 'index'])->name('ltia.index');
+
+        // Case Lookup API
+        Route::get('/api/cases/lookup', [App\Http\Controllers\CaseController::class, 'lookup'])->name('api.cases.lookup');
     });
 
     // Encoder Only Routes (Editing cases, documents, etc.)

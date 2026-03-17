@@ -48,12 +48,25 @@ class MockDataSeeder extends Seeder
         $forms = array_keys($formNamesMap);
 
         $documentsToCreate = [];
-        foreach ($forms as $form) {
-            $documentsToCreate[] = $form; // Ensures all 22 are used
+        
+        // Let's force some counts to match the user's request:
+        // Summons: 3
+        for ($i = 0; $i < 3; $i++) $documentsToCreate[] = 'summons';
+        
+        // Settlements: 1
+        $documentsToCreate[] = 'amicable_settlement';
+        
+        // Certificates: 6
+        for ($i = 0; $i < 6; $i++) {
+            $documentsToCreate[] = $faker->randomElement(['cert_file_action_court', 'cert_bar_action', 'cert_bar_counterclaim']);
         }
-
+        
+        // The rest are other types (Complaints, Notices, others)
         while (count($documentsToCreate) < 50) {
-            $documentsToCreate[] = $faker->randomElement($forms); // Randomize the rest up to 50
+            $documentsToCreate[] = $faker->randomElement([
+                'complaint', 'hearing_conciliation', 'hearing_mediation', 
+                'hearing_failure_appear', 'motion_execution', 'officers_return', 'letter_of_demand'
+            ]);
         }
 
         shuffle($documentsToCreate);
@@ -65,25 +78,39 @@ class MockDataSeeder extends Seeder
             LuponCase::query()->forceDelete();
             Document::query()->delete(); // Documents don't have soft deletes, but just in case
 
-            foreach ($documentsToCreate as $index => $formType) {
-                $caseNo = '2026-'.str_pad($faker->unique()->numberBetween(1000, 9999), 4, '0', STR_PAD_LEFT);
+            // Generate 50 Cases
+            for ($i = 0; $i < 50; $i++) {
+                $caseNo = '26-' . str_pad($i + 1, 3, '0', STR_PAD_LEFT);
                 $complainant = $faker->name();
                 $respondent = $faker->name();
-                $mockName = $formNamesMap[$formType];
+                
+                // Pick a form name for title randomness
+                $randomType = $faker->randomElement($forms);
+                $mockName = $formNamesMap[$randomType];
 
-                // Guarantee distribution across Jan, Feb, and March
-                if ($index < 15) {
-                    // Approximately 15 cases in January
+                // Distribution of dates
+                if ($i < 15) {
                     $dateFiled = $faker->dateTimeBetween('2026-01-01', '2026-01-31');
-                } elseif ($index < 30) {
-                    // Approximately 15 cases in February
+                } elseif ($i < 30) {
                     $dateFiled = $faker->dateTimeBetween('2026-02-01', '2026-02-28');
                 } else {
-                    // The rest (20 cases) in March
                     $dateFiled = $faker->dateTimeBetween('2026-03-01', 'now');
                 }
 
                 $isSameMonth = ($dateFiled->format('Y-m') === date('Y-m'));
+
+                $status = 'Pending';
+                if ($i < 15) {
+                    $status = 'Resolved';
+                } elseif ($i < 25) {
+                    $status = 'Pending';
+                } elseif ($i < 35) {
+                    $status = 'Mediation';
+                } elseif ($i < 43) {
+                    $status = 'Dismissed';
+                } else {
+                    $status = 'Certified';
+                }
 
                 $case = LuponCase::create([
                     'case_number' => $caseNo,
@@ -91,39 +118,46 @@ class MockDataSeeder extends Seeder
                     'nature_of_case' => $mockName,
                     'complainant' => $complainant,
                     'respondent' => $respondent,
-                    'status' => $faker->randomElement(['Pending', 'Resolved', 'Mediation', 'Dismissed', 'Certified']),
+                    'status' => $status,
                     'date_filed' => $dateFiled->format('Y-m-d'),
                     'complaint_narrative' => 'This case pertains to a '.$mockName.'. '.$faker->paragraph(),
                     'created_by' => $user->id,
-                    'deleted_at' => $isSameMonth ? null : now(), // Automatically archive if not in the current month (March)
+                    'deleted_at' => $isSameMonth ? null : now(),
                 ]);
 
-                $content = [
-                    'complainant' => $case->complainant,
-                    'respondent' => $case->respondent,
-                    'case_no' => $case->case_number,
-                    'made_this_1' => $faker->city,
-                    'made_this_2' => 'Province of '.$faker->lastName,
-                    'made_this_3' => 'Philippines',
-                    'made_this_day' => (string) $faker->numberBetween(1, 28),
-                    'made_this_month' => $faker->monthName,
-                    'year' => '2026',
-                    'body_text' => $faker->paragraph(),
-                ];
-
+                // Create document records for ALL 50 cases
+                $formType = $documentsToCreate[$i];
                 Document::create([
                     'case_id' => $case->id,
                     'type' => $formType,
-                    'content' => $content,
-                    'file_path' => null, // Assuming it's nullable
+                    'content' => [
+                        'complainant' => $case->complainant,
+                        'respondent' => $case->respondent,
+                        'case_no' => $case->case_number,
+                        'body_text' => $faker->paragraph(),
+                    ],
                     'status' => $faker->randomElement(['draft', 'completed', 'signed']),
                     'issued_at' => $faker->dateTimeBetween('-1 month', 'now'),
                     'created_by' => $user->id,
                 ]);
             }
 
+            // Seed one custom template to make 'Total Documents' (Templates) count exactly 15
+            Document::create([
+                'case_id' => null,
+                'type' => 'custom_form',
+                'content' => [
+                    'title' => 'Sample Lupon Application',
+                    'description' => 'A custom built form for testing',
+                    'icon_name' => 'FileSignature',
+                    'fields' => []
+                ],
+                'status' => 'completed',
+                'created_by' => $user->id,
+            ]);
+
             DB::commit();
-            $this->command->info('Successfully generated 50 mock documents. The 22 resources/forms files are now precisely used as the mock data names.');
+            $this->command->info('Successfully generated 50 mock documents and 1 custom template.');
         } catch (\Exception $e) {
             DB::rollBack();
             $this->command->error('Error seeding: '.$e->getMessage());

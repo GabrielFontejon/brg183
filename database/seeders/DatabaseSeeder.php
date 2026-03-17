@@ -13,21 +13,25 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Create Roles
+        \Spatie\Permission\Models\Role::create(['name' => 'Admin']);
+        \Spatie\Permission\Models\Role::create(['name' => 'Encoder']);
 
-        User::factory()->create([
+        $admin = User::factory()->create([
             'name' => 'Admin User',
             'email' => 'admin@gmail.com',
-            'role' => 'Admin',
             'password' => bcrypt('12345'),
+            'role' => 'Admin',
         ]);
+        $admin->assignRole('Admin');
 
-        User::factory()->create([
+        $encoder = User::factory()->create([
             'name' => 'Encoder User',
             'email' => 'encoder@gmail.com',
-            'role' => 'Encoder',
             'password' => bcrypt('12345'),
+            'role' => 'Encoder',
         ]);
+        $encoder->assignRole('Encoder');
 
         $this->call(MockDataSeeder::class);
     }

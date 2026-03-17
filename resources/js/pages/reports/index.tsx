@@ -12,9 +12,11 @@ import {
     CheckCircle,
     Users,
     FileSpreadsheet,
-    File as FileIcon
+    File as FileIcon,
+    Search,
+    Loader2
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -119,6 +121,33 @@ export default function Reports({ stats }: { stats: any }) {
     const [reportType, setReportType] = useState('summary');
     const [isGenerating, setIsGenerating] = useState(false);
     const [searchCaseNo, setSearchCaseNo] = useState('');
+    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(() => {
+            if (searchCaseNo.trim()) {
+                performSearch();
+            } else {
+                setSearchResults([]);
+            }
+        }, 500);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchCaseNo]);
+
+    const performSearch = async () => {
+        setIsSearching(true);
+        try {
+            const response = await fetch(`/api/cases/lookup?search=${encodeURIComponent(searchCaseNo)}`);
+            const data = await response.json();
+            setSearchResults(data);
+        } catch (error) {
+            console.error('Search failed:', error);
+        } finally {
+            setIsSearching(false);
+        }
+    };
 
     const handleGenerate = () => {
         setIsGenerating(true);
@@ -128,10 +157,6 @@ export default function Reports({ stats }: { stats: any }) {
         setTimeout(() => setIsGenerating(false), 3000);
     };
 
-    const handleSearch = () => {
-        if (!searchCaseNo) return;
-        window.open(`/documents/view/${encodeURIComponent(searchCaseNo)}`, '_blank');
-    };
 
     const quickReports = [
         {
@@ -234,26 +259,59 @@ export default function Reports({ stats }: { stats: any }) {
                     {/* Case Lookup */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Look Up Case Document</CardTitle>
+                            <CardTitle className="flex items-center gap-2">
+                                <Search className="w-5 h-5 text-indigo-500" />
+                                Look Up Case Document
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="flex gap-4">
-                                <div className="flex-1">
-                                    <input
-                                        type="text"
-                                        placeholder="Enter Case No. (e.g. 2024-001)"
-                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                        value={searchCaseNo}
-                                        onChange={(e) => setSearchCaseNo(e.target.value)}
-                                    />
-                                </div>
-                                <Button
-                                    onClick={handleSearch}
-                                    disabled={!searchCaseNo}
-                                    className="bg-indigo-600 hover:bg-indigo-700 text-white">
-                                    <CheckCircle className="mr-2 h-4 w-4" /> {/* Using CheckCircle as generic icon or Search if available */}
-                                    View
-                                </Button>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Enter Case No. or Title (e.g. 26-001)"
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pr-10"
+                                    value={searchCaseNo}
+                                    onChange={(e) => setSearchCaseNo(e.target.value)}
+                                />
+                                {isSearching && (
+                                    <div className="absolute right-3 top-2.5">
+                                        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Search Results Display */}
+                            <div className="space-y-2 max-h-[250px] overflow-y-auto custom-scrollbar">
+                                {searchResults.length > 0 ? (
+                                    searchResults.map((item) => (
+                                        <div 
+                                            key={item.id} 
+                                            className="flex items-center justify-between p-3 rounded-lg border bg-secondary/30 hover:bg-secondary/50 transition-colors group cursor-pointer"
+                                            onClick={() => window.open(`/documents/view-case/${item.id}`, '_blank')}
+                                        >
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">{item.case_number}</span>
+                                                <span className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate max-w-[200px]">{item.title}</span>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <Badge variant="outline" className="text-[10px] py-0 h-5 font-normal">
+                                                    {item.status}
+                                                </Badge>
+                                                <div className="p-1.5 bg-white dark:bg-slate-800 rounded-full shadow-sm border group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/30 transition-colors">
+                                                    <Eye className="w-4 h-4 text-indigo-600" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : searchCaseNo && !isSearching ? (
+                                    <p className="text-xs text-center text-muted-foreground py-4 bg-secondary/10 rounded-lg border border-dashed">
+                                        No matching cases found for "{searchCaseNo}"
+                                    </p>
+                                ) : !searchCaseNo ? (
+                                    <p className="text-xs text-center text-muted-foreground py-4">
+                                        Type a case number or title to see results
+                                    </p>
+                                ) : null}
                             </div>
                         </CardContent>
                     </Card>

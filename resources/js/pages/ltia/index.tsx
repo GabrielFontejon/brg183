@@ -22,7 +22,33 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Progress } from '@/components/ui/progress';
 import AppLayout from '@/layouts/app-layout';
 
-export default function LTIAPage() {
+interface Award {
+    year: string;
+    category: string;
+    recipient: string;
+    position: string;
+    achievement: string;
+    status: string;
+}
+
+interface LTIAProps {
+    stats: {
+        completion_rate: number;
+        nominees: number;
+        total_awards: number;
+        days_remaining: number;
+    };
+    metrics: {
+        resolution_rate: number;
+        settlement_success: number;
+        community_satisfaction: number;
+        timely_resolution: number;
+        documentation_quality: number;
+    };
+    awardHistory: Award[];
+}
+
+export default function LTIAPage({ stats, metrics, awardHistory }: LTIAProps) {
     const breadcrumbs = [
         {
             title: 'LTIA',
@@ -60,11 +86,11 @@ export default function LTIAPage() {
                                 <Trophy className="h-4 w-4 text-white dark:text-black stroke-[2.5]" />
                             </div>
                             <Badge variant="secondary" className="bg-slate-100 text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300">
-                                2024
+                                {new Date().getFullYear()}
                             </Badge>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-[#1c2434] dark:text-white">12</div>
+                            <div className="text-2xl font-bold text-[#1c2434] dark:text-white">{stats.total_awards}</div>
                             <p className="text-xs text-muted-foreground">Total Awards</p>
                         </CardContent>
                     </Card>
@@ -78,7 +104,7 @@ export default function LTIAPage() {
                             </Badge>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-[#1c2434] dark:text-white">8</div>
+                            <div className="text-2xl font-bold text-[#1c2434] dark:text-white">{stats.nominees}</div>
                             <p className="text-xs text-muted-foreground">Nominees</p>
                         </CardContent>
                     </Card>
@@ -92,7 +118,7 @@ export default function LTIAPage() {
                             </Badge>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-[#1c2434] dark:text-white">45</div>
+                            <div className="text-2xl font-bold text-[#1c2434] dark:text-white">{stats.days_remaining}</div>
                             <p className="text-xs text-muted-foreground">Days Remaining</p>
                         </CardContent>
                     </Card>
@@ -106,7 +132,7 @@ export default function LTIAPage() {
                             </Badge>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-[#1c2434] dark:text-white">92%</div>
+                            <div className="text-2xl font-bold text-[#1c2434] dark:text-white">{stats.completion_rate}%</div>
                             <p className="text-xs text-muted-foreground">Completion Rate</p>
                         </CardContent>
                     </Card>
@@ -115,166 +141,42 @@ export default function LTIAPage() {
                 {/* Award Categories */}
                 <div className="space-y-4">
                     <h3 className="text-lg font-semibold">Award Categories</h3>
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        {/* Card 1 */}
-                        <Card>
-                            <CardHeader className="pb-3">
-                                <div className="mb-2 p-2 w-fit bg-[#dd8b11] rounded-lg">
-                                    <Medal className="h-5 w-5 text-white dark:text-black stroke-[2.5]" />
-                                </div>
-                                <CardTitle className="text-base">Best Lupon</CardTitle>
-                                <CardDescription>
-                                    Awarded to the most outstanding Lupong Tagapamayapa with exceptional performance in case resolution.
-                                </CardDescription>
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                        {/* Summary metrics for categories instead of just static cards */}
+                        <Card className="bg-slate-50 border-none shadow-none dark:bg-slate-900/50">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase">Settlement Rate</CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="space-y-2 text-sm text-muted-foreground">
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle className="h-3 w-3 text-green-500" /> Minimum 50 resolved cases
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle className="h-3 w-3 text-green-500" /> 90% settlement rate
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle className="h-3 w-3 text-green-500" /> Zero pending complaints
-                                    </div>
-                                </div>
-                                <Button variant="outline" className="w-full">View Details</Button>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{metrics.settlement_success}%</div>
+                                <Progress value={metrics.settlement_success} className="h-1 mt-2" />
                             </CardContent>
                         </Card>
-
-                        {/* Card 2 */}
-                        <Card>
-                            <CardHeader className="pb-3">
-                                <div className="mb-2 p-2 w-fit bg-[#dd8b11] rounded-lg">
-                                    <Users className="h-5 w-5 text-white dark:text-black stroke-[2.5]" />
-                                </div>
-                                <CardTitle className="text-base">Outstanding Chairman</CardTitle>
-                                <CardDescription>
-                                    Recognition for exceptional leadership, case management skills, and dedication to community peace.
-                                </CardDescription>
+                        <Card className="bg-slate-50 border-none shadow-none dark:bg-slate-900/50">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase">Timely Resolution</CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="space-y-2 text-sm text-muted-foreground">
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle className="h-3 w-3 text-green-500" /> 3+ years of service
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle className="h-3 w-3 text-green-500" /> Exemplary leadership
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle className="h-3 w-3 text-green-500" /> Community recognition
-                                    </div>
-                                </div>
-                                <Button variant="outline" className="w-full">View Details</Button>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{metrics.timely_resolution}%</div>
+                                <Progress value={metrics.timely_resolution} className="h-1 mt-2" />
                             </CardContent>
                         </Card>
-
-                        {/* Card 3 */}
-                        <Card>
-                            <CardHeader className="pb-3">
-                                <div className="mb-2 p-2 w-fit bg-[#dd8b11] rounded-lg">
-                                    <Users className="h-5 w-5 text-white dark:text-black stroke-[2.5]" />
-                                </div>
-                                <CardTitle className="text-base">Best Mediator</CardTitle>
-                                <CardDescription>
-                                    Awarded to mediators who demonstrate exceptional skills in conflict resolution and amicable settlements.
-                                </CardDescription>
+                        <Card className="bg-slate-50 border-none shadow-none dark:bg-slate-900/50">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase">Documentation</CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="space-y-2 text-sm text-muted-foreground">
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle className="h-3 w-3 text-green-500" /> 30+ mediated cases
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle className="h-3 w-3 text-green-500" /> 85% success rate
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle className="h-3 w-3 text-green-500" /> Positive feedback
-                                    </div>
-                                </div>
-                                <Button variant="outline" className="w-full">View Details</Button>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{metrics.documentation_quality}%</div>
+                                <Progress value={metrics.documentation_quality} className="h-1 mt-2" />
                             </CardContent>
                         </Card>
-
-                        {/* Card 4 */}
-                        <Card>
-                            <CardHeader className="pb-3">
-                                <div className="mb-2 p-2 w-fit bg-[#dd8b11] rounded-lg">
-                                    <FileText className="h-5 w-5 text-white dark:text-black stroke-[2.5]" />
-                                </div>
-                                <CardTitle className="text-base">Most Efficient</CardTitle>
-                                <CardDescription>
-                                    Recognition for fastest case processing time while maintaining quality and fairness in resolutions.
-                                </CardDescription>
+                        <Card className="bg-slate-50 border-none shadow-none dark:bg-slate-900/50">
+                            <CardHeader className="pb-2">
+                                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase">Satisfaction</CardTitle>
                             </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="space-y-2 text-sm text-muted-foreground">
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle className="h-3 w-3 text-green-500" /> Average 15-day resolution
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle className="h-3 w-3 text-green-500" /> Quality maintained
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle className="h-3 w-3 text-green-500" /> No appeals filed
-                                    </div>
-                                </div>
-                                <Button variant="outline" className="w-full">View Details</Button>
-                            </CardContent>
-                        </Card>
-
-                        {/* Card 5 */}
-                        <Card>
-                            <CardHeader className="pb-3">
-                                <div className="mb-2 p-2 w-fit bg-[#dd8b11] rounded-lg">
-                                    <Heart className="h-5 w-5 text-white dark:text-black stroke-[2.5]" />
-                                </div>
-                                <CardTitle className="text-base">Community Service</CardTitle>
-                                <CardDescription>
-                                    Honors members who go beyond their duties to serve the community and promote peace and harmony.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="space-y-2 text-sm text-muted-foreground">
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle className="h-3 w-3 text-green-500" /> Community programs
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle className="h-3 w-3 text-green-500" /> Volunteer activities
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle className="h-3 w-3 text-green-500" /> Outreach initiatives
-                                    </div>
-                                </div>
-                                <Button variant="outline" className="w-full">View Details</Button>
-                            </CardContent>
-                        </Card>
-
-                        {/* Card 6 */}
-                        <Card>
-                            <CardHeader className="pb-3">
-                                <div className="mb-2 p-2 w-fit bg-[#dd8b11] rounded-lg">
-                                    <GraduationCap className="h-5 w-5 text-white dark:text-black stroke-[2.5]" />
-                                </div>
-                                <CardTitle className="text-base">Innovation Award</CardTitle>
-                                <CardDescription>
-                                    Recognizes creative approaches and innovative solutions in case management and dispute resolution.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="space-y-2 text-sm text-muted-foreground">
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle className="h-3 w-3 text-green-500" /> New methodologies
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle className="h-3 w-3 text-green-500" /> Process improvements
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle className="h-3 w-3 text-green-500" /> Measurable impact
-                                    </div>
-                                </div>
-                                <Button variant="outline" className="w-full">View Details</Button>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{metrics.community_satisfaction}%</div>
+                                <Progress value={metrics.community_satisfaction} className="h-1 mt-2" />
                             </CardContent>
                         </Card>
                     </div>
@@ -291,37 +193,37 @@ export default function LTIAPage() {
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="font-medium">Case Resolution Rate</span>
-                                    <span className="font-bold">87%</span>
+                                    <span className="font-bold">{metrics.resolution_rate}%</span>
                                 </div>
-                                <Progress value={87} className="h-3" />
+                                <Progress value={metrics.resolution_rate} className="h-3" />
                             </div>
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="font-medium">Settlement Success</span>
-                                    <span className="font-bold">92%</span>
+                                    <span className="font-bold">{metrics.settlement_success}%</span>
                                 </div>
-                                <Progress value={92} className="h-3" />
+                                <Progress value={metrics.settlement_success} className="h-3" />
                             </div>
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="font-medium">Community Satisfaction</span>
-                                    <span className="font-bold">95%</span>
+                                    <span className="font-bold">{metrics.community_satisfaction}%</span>
                                 </div>
-                                <Progress value={95} className="h-3" />
+                                <Progress value={metrics.community_satisfaction} className="h-3" />
                             </div>
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between text-sm">
-                                    <span className="font-medium">Timely Resolution</span>
-                                    <span className="font-bold">78%</span>
+                                    <span className="font-medium">Timely Resolution (15 days)</span>
+                                    <span className="font-bold">{metrics.timely_resolution}%</span>
                                 </div>
-                                <Progress value={78} className="h-3" />
+                                <Progress value={metrics.timely_resolution} className="h-3" />
                             </div>
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="font-medium">Documentation Quality</span>
-                                    <span className="font-bold">89%</span>
+                                    <span className="font-bold">{metrics.documentation_quality}%</span>
                                 </div>
-                                <Progress value={89} className="h-3" />
+                                <Progress value={metrics.documentation_quality} className="h-3" />
                             </div>
                         </CardContent>
                     </Card>
@@ -385,9 +287,6 @@ export default function LTIAPage() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Award History</CardTitle>
-                        <Button variant="outline" size="sm" className="h-8">
-                            2024 <ChevronLeft className="ml-2 h-3 w-3" />
-                        </Button>
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
@@ -404,13 +303,7 @@ export default function LTIAPage() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y">
-                                    {[
-                                        { year: '2024', category: 'Best Lupon', recipient: 'Barangay 183', position: 'Collective', achievement: '95% settlement rate, 120 cases resolved', status: 'Awarded' },
-                                        { year: '2024', category: 'Outstanding Chairman', recipient: 'Pedro Reyes', position: 'Chairman', achievement: '10 years service, exemplary leadership', status: 'Awarded' },
-                                        { year: '2023', category: 'Best Mediator', recipient: 'Maria Santos', position: 'Secretary', achievement: '45 mediated cases, 90% success rate', status: 'Awarded' },
-                                        { year: '2023', category: 'Most Efficient', recipient: 'Juan Dela Cruz', position: 'Lupon Member', achievement: '12 day average resolution time', status: 'Awarded' },
-                                        { year: '2022', category: 'Community Service', recipient: 'Rosa Garcia', position: 'Lupon Member', achievement: '15 community programs organized', status: 'Awarded' },
-                                    ].map((item, index) => (
+                                    {awardHistory.map((item, index) => (
                                         <tr key={index} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50">
                                             <td className="py-3 px-4 font-medium">{item.year}</td>
                                             <td className="py-3 px-4">{item.category}</td>
@@ -419,7 +312,7 @@ export default function LTIAPage() {
                                                 {item.recipient}
                                             </td>
                                             <td className="py-3 px-4 text-muted-foreground">{item.position}</td>
-                                            <td className="py-3 px-4 text-muted-foreground truncate max-w-[200px]">{item.achievement}</td>
+                                            <td className="py-3 px-4 text-muted-foreground truncate max-w-[300px]">{item.achievement}</td>
                                             <td className="py-3 px-4">
                                                 <Badge variant="secondary" className="bg-slate-100 text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300">
                                                     {item.status}
@@ -434,16 +327,6 @@ export default function LTIAPage() {
                                     ))}
                                 </tbody>
                             </table>
-                        </div>
-                        <div className="flex items-center justify-between mt-4 text-xs text-muted-foreground">
-                            <div>Showing 1-5 of 28 awards</div>
-                            <div className="flex gap-2">
-                                <Button variant="outline" size="icon" className="h-8 w-8" disabled><ChevronLeft className="h-3 w-3" /></Button>
-                                <Button variant="outline" size="icon" className="h-8 w-8 bg-[#1c2434] text-white hover:bg-[#2c3a4f] hover:text-white">1</Button>
-                                <Button variant="outline" size="icon" className="h-8 w-8">2</Button>
-                                <Button variant="outline" size="icon" className="h-8 w-8">3</Button>
-                                <Button variant="outline" size="icon" className="h-8 w-8"><ChevronRight className="h-3 w-3" /></Button>
-                            </div>
                         </div>
                     </CardContent>
                 </Card>
