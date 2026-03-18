@@ -336,7 +336,7 @@ export default function Dashboard({ stats, recentCases, statusDistribution, outc
                                             itemStyle={{ color: 'hsl(var(--foreground))' }}
                                             cursor={{ fill: 'transparent' }}
                                         />
-                                        <Bar dataKey="total" fill="#ffffff" radius={[4, 4, 0, 0]} />
+                                        <Bar dataKey="total" fill="#dd8b11" radius={[4, 4, 0, 0]} />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </div>

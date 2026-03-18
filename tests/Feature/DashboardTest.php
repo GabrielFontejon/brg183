@@ -7,9 +7,9 @@ test('guests are redirected to the login page', function () {
 });
 
 test('authenticated users can visit the dashboard', function () {
-    \Spatie\Permission\Models\Role::create(['name' => 'Admin']);
-    $user = User::factory()->create(['role' => 'Admin']);
-    $user->assignRole('Admin');
+    \Spatie\Permission\Models\Role::create(['name' => 'Administrator']);
+    $user = User::factory()->create();
+    $user->assignRole('Administrator');
 
     $this->actingAs($user);
 

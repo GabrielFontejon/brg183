@@ -4,7 +4,7 @@ namespace App\Config;
 
 class FormLayouts
 {
-    public static function getLayout($type)
+    public static function getAllLayouts()
     {
         // Common footer fields used in most forms
         $footerFields = [
@@ -251,6 +251,13 @@ class FormLayouts
                 ...$footerFields,
             ],
         ];
+
+        return $layouts;
+    }
+
+    public static function getLayout($type)
+    {
+        $layouts = self::getAllLayouts();
 
         // If the requested layout is empty (legacy fallback key), use default
         $layout = $layouts[$type] ?? null;
