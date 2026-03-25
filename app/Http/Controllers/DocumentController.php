@@ -220,6 +220,9 @@ class DocumentController extends Controller
         $type = $document->type;
         $case = $document->case;
 
+        // Security Audit Log
+        \App\Services\AuditService::log('VIEW', 'Documents', "Viewed {$type} document for Case #{$case?->case_number}", $case?->id);
+
         // Get Layout
         $savedLayout = FormLayout::where('document_type', $type)->first();
         if ($savedLayout) {
@@ -268,6 +271,9 @@ class DocumentController extends Controller
     {
         $case = \App\Models\LuponCase::where('id', $id)->orWhere('case_number', $id)->firstOrFail();
         $data = $case->document_data ?? [];
+
+        // Security Audit Log
+        \App\Services\AuditService::log('VIEW', 'Documents', "Viewed Case Document for Case #{$case->case_number}", $case->id);
 
         $type = $data['document_type'] ?? $data['type'] ?? 'complaint';
 

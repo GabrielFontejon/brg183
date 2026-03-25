@@ -36,9 +36,15 @@ return Application::configure(basePath: dirname(__DIR__))
                 $action = 'SYSTEM_ERROR';
                 $module = 'System Kernel';
                 
-                if ($e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException) {
+                if ($e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException || $e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
                     $action = 'PAGE_NOT_FOUND';
                     $module = 'Website Navigation';
+                    
+                    if ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
+                        $module = 'Database Records';
+                        $url = request()->fullUrl() ?? 'Unknown URL';
+                        $details = "Path: {$url} | Exception: Attempted to view a non-existent or deleted record.";
+                    }
                 } elseif ($e instanceof \Illuminate\Database\QueryException) {
                     $action = 'DATABASE_ERROR';
                     $module = 'Database System';
